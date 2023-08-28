@@ -1,0 +1,268 @@
+# Import Library Needed:
+import numpy as np
+import rospy, time, actionlib, moveit_msgs.msg, moveit_commander, math, sys, swift
+import roboticstoolbox as rtb 
+
+# Python Message via ROS:
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from spatialmath import SE3
+from sensor_msgs.msg import JointState
+from math import pi
+from scipy.spatial.transform import Rotation as R
+from spatialmath.base import *
+
+class UR3e:
+    
+    def __init__(self):
+            
+        # Define a Subcriber:
+        self.subscriber = rospy.Subscriber('/joint_states', JointState, self.getpos)
+
+        # Create an object of JointTrajectory()
+        self.joint_traj = JointTrajectory()
+
+        # Create a FollowJointTrajectoryGoal message:
+        self.goal = FollowJointTrajectoryGoal()
+        
+        # Set up Action Client when creating an object
+        self.set_up_action_client()
+
+        # Set up the Client (change the topic if needed:)
+        # self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        # Create a Time Flag when creating an object:
+        self.start_time = time.perf_counter()
+
+        # Data Member of the class
+        self.currentQ = []
+
+        self.model = rtb.models.UR3()
+
+    ##---- CallBack Function:
+    def getpos(self,msg):
+        self.currentQ = msg.position
+  
+    ##---- set_up_action_client function:
+    def set_up_action_client(self):
+        
+        # Set the joint names:
+        self.joint_traj.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
+        # Fill in the header:
+        self.joint_traj.header.frame_id = "base_link"
+
+        # Set up the joint names:
+        self.goal.trajectory.joint_names = self.joint_traj.joint_names
+
+        # Set up Sequence:
+        self.goal.trajectory.header.seq = 1
+
+        # Set up Time Stamp
+        self.goal.trajectory.header.stamp = rospy.Time.now()
+
+        # Set up the tolerance:
+        self.goal.goal_time_tolerance = rospy.Duration.from_sec(0.05)
+
+    ##---- convert_trajectory_to_rosmsg function:
+
+    def send_trajectory_to_client(self, path,  speed=1):
+        
+        # Clear the goal beforing adding new point:
+        self.goal.trajectory.points.clear()
+
+        # Set up the clock:
+        end_time = time.perf_counter()
+
+        # Calculate the excution time:
+        execution_time = end_time - self.start_time
+
+        for i in range(len(path)):
+            point = JointTrajectoryPoint()
+
+            point.positions = path[i]
+
+            point.time_from_start = rospy.Duration.from_sec((i+1)*(speed/len(path))) + rospy.Duration.from_sec(execution_time + 1)
+
+            self.goal.trajectory.points.append(point)
+        
+        # Send the goal to the client:
+        self.client.send_goal(self.goal)
+
+        self.client.wait_for_result()
+
+        result = self.client.get_result()
+
+        
+    def combine_trajectories(self, qlist):
+        
+        total_q = []
+        
+        for trajectory in qlist:
+            for q in trajectory.q:
+                total_q.append(q)
+
+        return total_q
+
+    def set_up_moveIt(self,maxVelocity):
+        
+        # Initialize the moveit_commander and rospy nodes
+        moveit_commander.roscpp_initialize(sys.argv)
+        
+        # Initialize the MoveIt planning scene, robot commander, and arm group
+        scene = moveit_commander.PlanningSceneInterface()
+        robot = moveit_commander.RobotCommander()
+        self.arm = moveit_commander.MoveGroupCommander("manipulator")
+
+        # Set the reference frame and end effector link
+        self.arm.set_pose_reference_frame("base_link")
+        self.arm.set_end_effector_link("ee_link")
+
+        # Set the maximum velocity scaling factor
+        self.arm.set_max_velocity_scaling_factor(maxVelocity)
+
+        # Get the current joint values
+        current_joint_values = self.arm.get_current_joint_values()
+
+    # Generate trajectory by jtraj:
+    def move_jtraj(self, q0, q, env, steps = 50, speed = 1, real_robot = False):
+        
+        # Generate a path:
+        path = rtb.jtraj(q0, q, steps)
+
+        # Send to messange to the robot
+        if real_robot:
+            self.send_trajectory_to_client(path.q, speed)
+        else:
+            self.move_simulation_robot(path.q, env = env)
+
+        return path
+
+    # Simulate the robot by Swift to test before sending to the real robot:
+    def move_simulation_robot(self, path, env, dt = 0.05):
+        # Simulation the Robot in the Swift Environment:
+        for q in path:
+            self.model.q = q
+            env.step(dt)
+
+    # Def Perform RMRC Motion by 2 points:
+    def perform_rmrc_2_points(self, point1, point2, lock_ee = True):
+
+        # The number of waypoints between two points:
+        num_waypoints = 100
+
+        # Initialize the waypoints matrix:
+        waypoints = np.zeros((num_waypoints, 3))
+
+        # Linear interpolation between the two points:
+        for i in range(num_waypoints):
+            t = i / (num_waypoints - 1) # Interpolation parameter [0, 1]
+            waypoints[i, :] = (1 - t)*point1 +t*point2
+        
+        # Create a matrix of joint angles:
+        q_matrix = np.empty((num_waypoints, self.model.n))
+        q_matrix[0, :] = self.model.q
+
+        # Create a desired pose to lock the orientation of the end-effector:
+        desired_pose = self.model.fkine(self.model.q).A
+        desired_orientation = desired_pose[0:3, 0:3]
+        
+        # The delta T between each steps:
+        deltaT = 0.05
+        
+        # Perform RMRC:
+        for i in range(num_waypoints - 1):
+            xdot = (waypoints[i + 1, :] - waypoints[i, :]) / deltaT
+            J = self.model.jacob0(q_matrix[i, :])
+            Jv = J[0:3, :]
+
+            if lock_ee == True:
+                orientationDiff = self.calculate_ori_diff(desired_orientation, q_matrix[i, :])
+                combinedVelocity = np.concatenate((xdot, orientationDiff), axis=None)
+                qdot = np.linalg.pinv(J) @ combinedVelocity 
+            else:
+                qdot = np.linalg.pinv(Jv) @ xdot
+
+            q_matrix[i + 1, :] = q_matrix[i, :] + deltaT * qdot
+
+        return q_matrix
+    
+    def calculate_ori_diff(self, desiredOre, currentPose):
+        currentPose = self.model.fkine(currentPose).A
+        currentOre = currentPose[0:3, 0:3]
+
+        rotationMatrix = desiredOre @ currentOre.T
+        r = R.from_matrix(rotationMatrix)
+        angle = r.as_rotvec()
+
+        orientationDiff = angle
+
+        return orientationDiff
+
+    def move_ee_up_down(self, height, env, speed = 1, real_robot = False):
+        # Get the end-effector pose at this position:
+        ee_tr = self.model.fkine(self.model.q).A
+
+        # Get the point:
+        point_1 = np.array([ee_tr[0,3], ee_tr[1,3], ee_tr[2,3]])
+
+        # Get the desire point to move the end-effector down:
+        point_2 = np.array([ee_tr[0,3], ee_tr[1,3], ee_tr[2,3]+ height])
+
+        # Perform RMRC:
+        path = self.perform_rmrc_2_points(point_1, point_2)
+
+        # Simulation the movement:
+        if real_robot:
+            self.send_trajectory_to_client(path, speed)
+        else:
+            self.move_simulation_robot(path, env = env)
+
+
+    def get_joint_list(self) -> list:
+
+        joint_list = [] # List of joints
+
+        j = 0
+        for link in self.model.links:
+            if link.isjoint:
+                joint_list.append(j)
+            j += 1
+
+        return joint_list
+
+    def get_link_transform(self, q) -> list:
+        transform_list = [] # Tranforms array of link
+        joint_list = self.get_joint_list() # List of joints as link index
+
+        for i in joint_list:
+            transform_list.append(self.model.fkine(q,end = self.model.links[i].name)) 
+        return transform_list    
+    
+
+    def is_touch_ground(self,q)->bool:
+        
+        # Get the link transform of each link:
+        transform_list = self.get_link_transform(q)
+
+        # Calculate Height of each link relative to the base of the robot:
+        height = [T.A[2,3] for T in transform_list]
+
+        # Check the codition of touching ground:
+        if min(height) > transform_list[0].A[2,3]: # at position 0 is the robot base
+            return False
+        else: 
+            return True
+
+
+        
+
+    
+        
+
+
+
+        
+
+
+        
