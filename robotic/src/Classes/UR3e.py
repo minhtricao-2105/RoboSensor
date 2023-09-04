@@ -2,6 +2,7 @@
 import numpy as np
 import rospy, time, actionlib, moveit_msgs.msg, moveit_commander, math, sys, swift
 import roboticstoolbox as rtb 
+import copy
 
 # Python Message via ROS:
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -31,6 +32,7 @@ class UR3e:
         # Set up the Client (change the topic if needed:)
         # self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        
         # Create a Time Flag when creating an object:
         self.start_time = time.perf_counter()
 
@@ -93,7 +95,8 @@ class UR3e:
 
         result = self.client.get_result()
 
-        
+    ##---- combine_trajectories function:
+
     def combine_trajectories(self, qlist):
         
         total_q = []
@@ -103,6 +106,8 @@ class UR3e:
                 total_q.append(q)
 
         return total_q
+
+    ##---- set_up_moveIt function:
 
     def set_up_moveIt(self,maxVelocity):
         
@@ -124,7 +129,8 @@ class UR3e:
         # Get the current joint values
         current_joint_values = self.arm.get_current_joint_values()
 
-    # Generate trajectory by jtraj:
+    ##---- move_jtraj function:
+
     def move_jtraj(self, q0, q, env, steps = 50, speed = 1, real_robot = False):
         
         # Generate a path:
@@ -133,19 +139,23 @@ class UR3e:
         # Send to messange to the robot
         if real_robot:
             self.send_trajectory_to_client(path.q, speed)
+            
+            # update to robot.q
+            self.model.q = path.q[-1, :]
         else:
             self.move_simulation_robot(path.q, env = env)
 
         return path
 
-    # Simulate the robot by Swift to test before sending to the real robot:
+    ##---- move_simulation_robot function:
+
     def move_simulation_robot(self, path, env, dt = 0.05):
         # Simulation the Robot in the Swift Environment:
         for q in path:
             self.model.q = q
             env.step(dt)
 
-    # Def Perform RMRC Motion by 2 points:
+    ##---- perform_rmrc_2_points function:
     def perform_rmrc_2_points(self, point1, point2, lock_ee = True):
 
         # The number of waypoints between two points:
@@ -185,8 +195,13 @@ class UR3e:
 
             q_matrix[i + 1, :] = q_matrix[i, :] + deltaT * qdot
 
+        # Update to robot.q
+        self.model.q = q_matrix[-1, :]
+
         return q_matrix
     
+    ##---- calculate_ori_diff function:
+
     def calculate_ori_diff(self, desiredOre, currentPose):
         currentPose = self.model.fkine(currentPose).A
         currentOre = currentPose[0:3, 0:3]
@@ -198,6 +213,8 @@ class UR3e:
         orientationDiff = angle
 
         return orientationDiff
+
+    ##---- move_ee_up_down function:
 
     def move_ee_up_down(self, height, env, speed = 1, real_robot = False):
         # Get the end-effector pose at this position:
@@ -218,6 +235,7 @@ class UR3e:
         else:
             self.move_simulation_robot(path, env = env)
 
+    ##---- get_joint_list function:
 
     def get_joint_list(self) -> list:
 
@@ -231,6 +249,8 @@ class UR3e:
 
         return joint_list
 
+    ##---- get_link_transform function:
+
     def get_link_transform(self, q) -> list:
         transform_list = [] # Tranforms array of link
         joint_list = self.get_joint_list() # List of joints as link index
@@ -239,6 +259,7 @@ class UR3e:
             transform_list.append(self.model.fkine(q,end = self.model.links[i].name)) 
         return transform_list    
     
+    ##---- is_touch_ground function:
 
     def is_touch_ground(self,q)->bool:
         
@@ -255,7 +276,89 @@ class UR3e:
             return True
 
 
+    def solve_elbow_up_ikine(self, desired_T, q_guess, env, speed = 1, real_robot = False):
+
+        # Get the current joint angles:
+        currentQ = q_guess
+
+        # Get the parameters of variations:
+        delta_rot = np.pi/8
+
+        # Define the variations:
+        variations = np.array([
+            [delta_rot, 0, 0, 0, 0, 0],
+            [-delta_rot, 0, 0, 0, 0, 0],
+            [0, delta_rot, 0, 0, 0, 0],
+            [0, -delta_rot, 0, 0, 0, 0],
+            [0, 0, delta_rot, 0, 0, 0],
+            [0, 0, -delta_rot, 0, 0, 0]
+        ])
+
+        # Define the initial guess:
+        guesses = currentQ + variations
+
+        solutions = []
         
+        # Loop through all the guesses for solving the inverse kinematics:
+        for i in range(guesses.shape[0]):
+            sol = self.model.ikine_LM(desired_T, q0=guesses[i, :], ilimit=100, method='pseudoinverse').q
+            if sol is not None:
+                solutions.append(sol)
+
+        # Check if there is any solution:
+        if not solutions:
+            raise ValueError('No IK solutions found')
+        
+        # Convert the solutions to numpy array:
+        solutions = np.array(solutions)
+        
+        # Check if there is any solution with elbow up:
+        elbowUpSolutions = solutions[solutions[:, 2] > 0]
+        otherSolutions = solutions[solutions[:, 2] <= 0]
+
+        # If there is any solution with elbow up, choose the one with the smallest distance to the current joint angles:
+        if elbowUpSolutions.any():
+            distances = np.sum((elbowUpSolutions - currentQ)**2, axis=1)
+            idx = np.argmin(distances)
+            q_final = elbowUpSolutions[idx, :]
+        else:
+            distances = np.sum((otherSolutions - currentQ)**2, axis=1)
+            idx = np.argmin(distances)
+            q_final = otherSolutions[idx, :]
+        
+        # Generate the path using jtraj
+        path = rtb.jtraj(self.model.q, q_final, 50)
+
+        # Send to messange to the robot
+        if real_robot:
+            self.send_trajectory_to_client(path.q, speed)
+            
+            # update to robot.q
+            self.model.q = path.q[-1, :]
+        else:
+            self.move_simulation_robot(path.q, env = env)
+
+        return path
+    
+
+    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = False):
+
+        desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))
+
+        # Create a jtraj:
+        path = rtb.jtraj(self.model.q, desired_q, 50)
+
+        # Send to messange to the robot
+        if real_robot:
+            self.send_trajectory_to_client(path.q, speed)
+            
+            # update to robot.q
+            self.model.q = path.q[-1, :]
+        else:
+            self.move_simulation_robot(path.q, env = env)
+
+        return path
+
 
     
         
