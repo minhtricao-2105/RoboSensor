@@ -30,8 +30,8 @@ class UR3e:
         self.set_up_action_client()
 
         # Set up the Client (change the topic if needed:)
-        # self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-        self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
+        # self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         
         # Create a Time Flag when creating an object:
         self.start_time = time.perf_counter()
@@ -216,7 +216,7 @@ class UR3e:
 
     ##---- move_ee_up_down function:
 
-    def move_ee_up_down(self, height, env, speed = 1, real_robot = False):
+    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 1, real_robot = False):
         # Get the end-effector pose at this position:
         ee_tr = self.model.fkine(self.model.q).A
 
@@ -224,7 +224,7 @@ class UR3e:
         point_1 = np.array([ee_tr[0,3], ee_tr[1,3], ee_tr[2,3]])
 
         # Get the desire point to move the end-effector down:
-        point_2 = np.array([ee_tr[0,3], ee_tr[1,3], ee_tr[2,3]+ height])
+        point_2 = np.array([ee_tr[0,3] + delta_x, ee_tr[1,3] + delta_y, ee_tr[2,3]+ delta_z])
 
         # Perform RMRC:
         path = self.perform_rmrc_2_points(point_1, point_2)
@@ -345,6 +345,7 @@ class UR3e:
 
         desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))
 
+        print(desired_q)
         # Create a jtraj:
         path = rtb.jtraj(self.model.q, desired_q, 50)
 
