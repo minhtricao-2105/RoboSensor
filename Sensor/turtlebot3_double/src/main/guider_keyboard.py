@@ -10,6 +10,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Append the parent directory of the script directory to the Python path
 sys.path.append(os.path.join(script_dir, ".."))
 
+from classes.Guider_controller import Guider
 from classes.Controller import Controller
 
 def main(stdscr):
@@ -21,7 +22,7 @@ def main(stdscr):
     rospy.init_node('turtlebot_controller', anonymous=True)
 
     # Create an instance of the Controller class
-    controller = Controller(stdscr)
+    controller = Guider(stdscr)
 
     # Start the keyboard control
     controller.keyboard_control()
@@ -34,3 +35,4 @@ def main(stdscr):
 
 if __name__ == "__main__":
     curses.wrapper(main)
+

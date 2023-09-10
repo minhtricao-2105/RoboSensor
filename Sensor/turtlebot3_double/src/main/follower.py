@@ -9,7 +9,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Append the parent directory of the script directory to the Python path
 sys.path.append(os.path.join(script_dir, ".."))
 
-from classes.Controller import Controller
+
 from classes.Sensor import Sensor
 
 # ROS node initialization

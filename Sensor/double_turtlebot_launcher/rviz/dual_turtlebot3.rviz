@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
+        - /RobotModel21
       Splitter Ratio: 0.36039602756500244
     Tree Height: 746
   - Class: rviz/Selection
@@ -104,8 +105,6 @@ Visualization Manager:
           Value: true
         tb3_1/wheel_right_link:
           Value: true
-        world:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -116,42 +115,41 @@ Visualization Manager:
         odom:
           base_footprint:
             {}
-        world:
-          tb3_0/base_footprint:
-            tb3_0/base_link:
-              tb3_0/aruco_marker_link:
-                {}
-              tb3_0/base_scan:
-                {}
-              tb3_0/caster_back_link:
-                {}
-              tb3_0/imu_link:
-                {}
-              tb3_0/wheel_left_link:
-                {}
-              tb3_0/wheel_right_link:
-                {}
-          tb3_1/base_footprint:
-            tb3_1/base_link:
-              tb3_1/base_scan:
-                {}
-              tb3_1/camera_link:
-                tb3_1/camera_depth_frame:
-                  tb3_1/camera_depth_optical_frame:
-                    {}
-                tb3_1/camera_rgb_frame:
-                  tb3_1/camera_rgb_optical_frame:
-                    {}
-              tb3_1/caster_back_left_link:
-                {}
-              tb3_1/caster_back_right_link:
-                {}
-              tb3_1/imu_link:
-                {}
-              tb3_1/wheel_left_link:
-                {}
-              tb3_1/wheel_right_link:
-                {}
+        tb3_0/base_footprint:
+          tb3_0/base_link:
+            tb3_0/aruco_marker_link:
+              {}
+            tb3_0/base_scan:
+              {}
+            tb3_0/caster_back_link:
+              {}
+            tb3_0/imu_link:
+              {}
+            tb3_0/wheel_left_link:
+              {}
+            tb3_0/wheel_right_link:
+              {}
+        tb3_1/base_footprint:
+          tb3_1/base_link:
+            tb3_1/base_scan:
+              {}
+            tb3_1/camera_link:
+              tb3_1/camera_depth_frame:
+                tb3_1/camera_depth_optical_frame:
+                  {}
+              tb3_1/camera_rgb_frame:
+                tb3_1/camera_rgb_optical_frame:
+                  {}
+            tb3_1/caster_back_left_link:
+              {}
+            tb3_1/caster_back_right_link:
+              {}
+            tb3_1/imu_link:
+              {}
+            tb3_1/wheel_left_link:
+              {}
+            tb3_1/wheel_right_link:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -210,60 +208,6 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        aruco_marker_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_footprint:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_scan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        caster_back_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        imu_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        wheel_left_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wheel_right_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Name: RobotModel1
-      Robot Description: /tb3_0/robot_description
-      TF Prefix: tb3_0
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Alpha: 1
       Class: rviz/RobotModel
       Collision Enabled: false
@@ -343,7 +287,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: tb3_1/base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -367,7 +311,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.733222007751465
+      Distance: 1.2693195343017578
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -375,9 +319,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.42551496624946594
-        Y: -0.46475350856781006
-        Z: 0.014427906833589077
+        X: -0.0730677917599678
+        Y: -0.26580125093460083
+        Z: -0.06626897305250168
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
