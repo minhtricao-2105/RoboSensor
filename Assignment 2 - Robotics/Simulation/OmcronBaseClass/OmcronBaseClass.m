@@ -115,7 +115,7 @@ classdef OmcronBaseClass < handle
             end
             drawnow();
         end
-        
+
         % -------------------- Check Colision in this Area ---------------%
 
         %% GetLinkPoses Function:
@@ -280,10 +280,15 @@ classdef OmcronBaseClass < handle
             end
 
         end
-        
-        %% Create a 
-        function CreateEllipsoidLinks(self)
+
+        %% Create a
+        function linkEllipsoids = CreateEllipsoidLinks(self, visualize)
             
+            % Check the input argument of this function:
+            if nargin < 2
+                visualize = false;
+            end
+
             % Get the link of the robot:
             links = self.model.links;
 
@@ -293,74 +298,112 @@ classdef OmcronBaseClass < handle
             % Get Transform of each link
             transforms = self.GetLinkPoses(self.model.getpos);
 
-            % Allocate the struct
-            ellipsoids = struct('center', [], 'radii', [], 'X', {}, 'Y', {}, 'Z', {});
+            % Initialize linkEllipsoids:
+            linkEllipsoids(numLinks).center = [];
+            linkEllipsoids(numLinks).radii = [];
+            linkEllipsoids(numLinks).X = [];
+            linkEllipsoids(numLinks).Y = [];
+            linkEllipsoids(numLinks).Z = [];
 
             % For each link, calculate ellipsoid:
             for i = 1:numLinks
+                
+                % Get the DH parameter:
+                L = links(1,i);
+
                 % The ellipsoid's center is midway between the link's start and end.
                 startPoint = transforms(1:3, 4, i)';
                 endPoint = transforms(1:3, 4, i+1)';
                 center = (startPoint + endPoint) / 2;
+                
+                % Correct the link 3:
+                if i == 2
+                    Zdirection = orientation(1:3,3); 
+                    center = center + 0.15 * Zdirection';
+                end
+                % Extract the translation part for the center of the ellipsoid:
+                linkEllipsoids(i).center = center;
 
                 % Calculate link's length
                 linkLength = norm(endPoint - startPoint);
 
                 % Set ellipsoid's radii
-                majorRadius = (linkLength / 2);
-                intermediateRadius = 0.3 * linkLength;
-
-                % Find the direction vector from two link:
-                directionVector = endPoint - startPoint;
-                unitVector = directionVector / norm(directionVector)
+                majorRadius = (linkLength / 2)*1.5;
+                intermediateRadius = linkLength;
                 
-                norm(unitVector)
-                % Assuming majorRadius is always larger than intermediateRadius
-                if abs(unitVector(3)) == 1
-                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), intermediateRadius, intermediateRadius, majorRadius);
-                elseif abs(unitVector(1)) == 1
-                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), majorRadius, intermediateRadius, intermediateRadius);
-                elseif abs(unitVector(2)) == 1
-                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), intermediateRadius, majorRadius, intermediateRadius);
+                % Set ellipsoid's radii
+                if L.a ~= 0
+                    semiAxes = [majorRadius, intermediateRadius*0.3, intermediateRadius*0.3];
+                elseif L.d ~= 0
+                    semiAxes = [intermediateRadius*0.5, majorRadius*1.5, intermediateRadius*0.5];
+                end
+                
+                if i == 6
+                    semiAxes = [intermediateRadius*0.5, intermediateRadius*0.5, majorRadius];
                 end
 
-                % Store in ellipsoids struct
-                ellipsoids(i).center = center;
-                ellipsoids(i).X = X;
-                ellipsoids(i).Y = Y;
-                ellipsoids(i).Z = Z;
+                % Store to the output:
+                linkEllipsoids(i).radii = semiAxes;
 
-                % Plot the ellipsoid
-                hold on;
-                surf(X, Y, Z); % 'FaceAlpha' for transparency
+                % Generate the ellipsoid:
+                [X,Y,Z] = ellipsoid(center(1), center(2), center(3), semiAxes(1), semiAxes(2), semiAxes(3), 50);
+                
+                % Get the orientation:
+                orientation = transforms(1:3, 1:3, i+1);
+
+                for j = 1:numel(X)
+                    
+                    % Shift to origin
+                    point = [X(j); Y(j); Z(j)] - center'; 
+                    
+                    % Rotate and shift back
+                    rotatedPoint = orientation*point + center';  
+                    X(j) = rotatedPoint(1);
+                    Y(j) = rotatedPoint(2);
+                    Z(j) = rotatedPoint(3);
+                end
+                
+                % Store it the output of this function:
+                linkEllipsoids(i).X = X;
+                linkEllipsoids(i).Y = Y;
+                linkEllipsoids(i).Z = Z;
+
+                % Update the ellipsoid with the rotated points:
+                if visualize == true
+                    surf(X,Y,Z, 'FaceColor', [0,0,1], 'EdgeColor', 'none');
+                    hold on;
+                end
+
             end
 
         end
 
+        %% DrawEllipsoid
+
         %% CheckSelfCollision
         function isCollising = CheckSelfCollision(self)
-            
+
             % Get the transform of each link:
             transforms = self.GetLinkPoses(self.model.getpos);
 
             % Get the initial parameters:
             numLinks = size(transforms, 3);
-            
+
             % Calculate face normals:
             faceNormals = zeros(numLinks, 3);
 
             for i = 1:numLinks-1
-                
+
             end
 
             % Check for collisions:
             for i = 2:numLinks
-                
+
                 % Get the first l
             end
         end
 
-        % --------------- RMRC CONTROL BELOW THIS AREA -------------------% 
+        % --------------- RMRC CONTROL BELOW THIS AREA -------------------%
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
@@ -385,14 +428,14 @@ classdef OmcronBaseClass < handle
 
             % Solve for Initial Joint Angles
             qMatrix(1, :) = self.model.getpos;
-            
+
             % Get the desired orientation of the end-effector:
             desiredPose = self.model.fkine(self.model.getpos).T;
             desiredOre  = desiredPose(1:3, 1:3);
 
             % Track the trajectory with RMRC:
             for i = 1:steps-1
-                
+
                 % Find the linear velocity vector at this current pose:
                 xdot = (waypoints(i + 1, :) - waypoints(i, :)) / deltaT;
 
@@ -404,14 +447,14 @@ classdef OmcronBaseClass < handle
 
                 % Combine Velocity:
                 combinedVelocity = [xdot';  orientationDiff];
-                
+
                 % Measure of Manipulability
                 mu = sqrt(det(J*J'));
-                
+
                 % If manipulability is less than given threshold
-                if mu < threshold 
+                if mu < threshold
                     % Damping coefficient (example value)
-                    lambda = 0.01; 
+                    lambda = 0.01;
 
                     % Apply Damped Least Squares pseudoinverse
                     invJ = (J'*J + lambda^2*eye(6))\J';
@@ -421,9 +464,9 @@ classdef OmcronBaseClass < handle
 
                 % Solve velocities via RMRC:
                 qdot = invJ*combinedVelocity;
-                
+
                 % Update next joint state based on joint velocities:
-                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot'; 
+                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot';
 
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
@@ -446,6 +489,6 @@ classdef OmcronBaseClass < handle
             % Convert the rotation vector to a 3x1 angular error vector
             orientationDiff = angle(:,1:3)'*angle(:,4);
         end
-        
+
     end
 end
