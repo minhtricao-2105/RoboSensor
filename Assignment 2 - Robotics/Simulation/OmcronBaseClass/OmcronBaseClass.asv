@@ -284,7 +284,7 @@ classdef OmcronBaseClass < handle
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
-        % Cartesian plane.
+        % Cartesian
         function RMRC(self, point1, point2)
 
             % Initial parameter
@@ -305,8 +305,7 @@ classdef OmcronBaseClass < handle
 
             % Solve for Initial Joint Angles
             qMatrix(1, :) = self.model.getpos;
-            
-            % Get the desired orientation of the end-effector:
+
             desiredPose = self.model.fkine(self.model.getpos).T;
             desiredOre  = desiredPose(1:3, 1:3);
 
@@ -327,16 +326,12 @@ classdef OmcronBaseClass < handle
                 
                 % Measure of Manipulability
                 mu = sqrt(det(J*J'));
-                
-                % If manipulability is less than given threshold
-                if mu < threshold 
-                    % Damping coefficient (example value)
-                    lambda = 0.01; 
 
-                    % Apply Damped Least Squares pseudoinverse
-                    invJ = (J'*J + lambda^2*eye(6))\J';
+                if mu < threshold % If manipulability is less than given threshold
+                    lambda = 0.01; % Damping coefficient (example value)
+                    invJ = (J'*J + lambda^2*eye(6))\J'; % Apply Damped Least Squares pseudoinverse
                 else
-                    invJ = pinv(J);
+                    invJ = pinv(J); % Don't use DLS
                 end
 
                 % Solve velocities via RMRC:
@@ -366,8 +361,5 @@ classdef OmcronBaseClass < handle
             % Convert the rotation vector to a 3x1 angular error vector
             orientationDiff = angle(:,1:3)'*angle(:,4);
         end
-
-        %% 
-        
     end
 end
