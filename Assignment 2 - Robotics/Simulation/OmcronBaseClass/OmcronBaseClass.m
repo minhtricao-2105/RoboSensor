@@ -283,7 +283,7 @@ classdef OmcronBaseClass < handle
 
         %% Create a
         function linkEllipsoids = CreateEllipsoidLinks(self, visualize)
-            
+
             % Check the input argument of this function:
             if nargin < 2
                 visualize = false;
@@ -307,7 +307,7 @@ classdef OmcronBaseClass < handle
 
             % For each link, calculate ellipsoid:
             for i = 1:numLinks
-                
+
                 % Get the DH parameter:
                 L = links(1,i);
 
@@ -315,12 +315,13 @@ classdef OmcronBaseClass < handle
                 startPoint = transforms(1:3, 4, i)';
                 endPoint = transforms(1:3, 4, i+1)';
                 center = (startPoint + endPoint) / 2;
-                
+
                 % Correct the link 3:
                 if i == 2
-                    Zdirection = orientation(1:3,3); 
+                    Zdirection = orientation(1:3,3);
                     center = center + 0.15 * Zdirection';
                 end
+
                 % Extract the translation part for the center of the ellipsoid:
                 linkEllipsoids(i).center = center;
 
@@ -328,16 +329,17 @@ classdef OmcronBaseClass < handle
                 linkLength = norm(endPoint - startPoint);
 
                 % Set ellipsoid's radii
-                majorRadius = (linkLength / 2)*1.5;
+                majorRadius = (linkLength / 2);
                 intermediateRadius = linkLength;
-                
+
                 % Set ellipsoid's radii
                 if L.a ~= 0
                     semiAxes = [majorRadius, intermediateRadius*0.3, intermediateRadius*0.3];
                 elseif L.d ~= 0
-                    semiAxes = [intermediateRadius*0.5, majorRadius*1.5, intermediateRadius*0.5];
+                    semiAxes = [intermediateRadius*0.5, majorRadius*2.1, intermediateRadius*0.5];
                 end
-                
+
+                % Correct the link 6:
                 if i == 6
                     semiAxes = [intermediateRadius*0.5, intermediateRadius*0.5, majorRadius];
                 end
@@ -347,22 +349,22 @@ classdef OmcronBaseClass < handle
 
                 % Generate the ellipsoid:
                 [X,Y,Z] = ellipsoid(center(1), center(2), center(3), semiAxes(1), semiAxes(2), semiAxes(3), 50);
-                
+
                 % Get the orientation:
                 orientation = transforms(1:3, 1:3, i+1);
 
                 for j = 1:numel(X)
-                    
+
                     % Shift to origin
-                    point = [X(j); Y(j); Z(j)] - center'; 
-                    
+                    point = [X(j); Y(j); Z(j)] - center';
+
                     % Rotate and shift back
-                    rotatedPoint = orientation*point + center';  
+                    rotatedPoint = orientation*point + center';
                     X(j) = rotatedPoint(1);
                     Y(j) = rotatedPoint(2);
                     Z(j) = rotatedPoint(3);
                 end
-                
+
                 % Store it the output of this function:
                 linkEllipsoids(i).X = X;
                 linkEllipsoids(i).Y = Y;
@@ -378,29 +380,43 @@ classdef OmcronBaseClass < handle
 
         end
 
-        %% DrawEllipsoid
-
         %% CheckSelfCollision
-        function isCollising = CheckSelfCollision(self)
+        function isCollision = CheckSelfCollision(self)
 
-            % Get the transform of each link:
-            transforms = self.GetLinkPoses(self.model.getpos);
+            % Get the ellipsoids for all links
+            linkEllipsoids = self.CreateEllipsoidLinks(false);
 
-            % Get the initial parameters:
-            numLinks = size(transforms, 3);
+            % Number of ellipsoids (equal to number of links)
+            numEllipsoids = length(linkEllipsoids);
 
-            % Calculate face normals:
-            faceNormals = zeros(numLinks, 3);
+            % Loop over all pairs of ellipsoids to check for collision
+            for i = 1:numEllipsoids-2
+                for j = i+2:numEllipsoids
+                    
+                    % Get the center and radii of the first ellipsoid
+                    center1 = linkEllipsoids(i).center;
+                    radii1 = linkEllipsoids(i).radii;
 
-            for i = 1:numLinks-1
+                    % Extract the X, Y, and Z coordinates of the points on the second ellipsoid
+                    points2 = [linkEllipsoids(j).X(:), linkEllipsoids(j).Y(:), linkEllipsoids(j).Z(:)];
 
+                    % Check if any point from ellipsoid j is inside ellipsoid i
+                    [~, conditions] = self.QuadraticDistance(points2, center1, radii1);
+                    
+                    % Count the number of points that are inside the ellipsoid
+                    collisionPoints = sum(conditions == 0)
+
+                    % If any point has a condition of 0, it indicates a collision
+                    if collisionPoints > 20
+                        isCollision = true;
+                        return;
+                    end
+                end
             end
 
-            % Check for collisions:
-            for i = 2:numLinks
+            % If no collisions detected, return false
+            isCollision = false;
 
-                % Get the first l
-            end
         end
 
         % --------------- RMRC CONTROL BELOW THIS AREA -------------------%
