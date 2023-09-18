@@ -115,6 +115,8 @@ classdef OmcronBaseClass < handle
             end
             drawnow();
         end
+        
+        % -------------------- Check Colision in this Area ---------------%
 
         %% GetLinkPoses Function:
         function [transforms] = GetLinkPoses(self, q)
@@ -218,9 +220,6 @@ classdef OmcronBaseClass < handle
         end
 
         %% QuadraticDistance function
-        %
-        %
-        %
         function [distances, conditions] = QuadraticDistance(self, points, centerPoint, radii)
 
             % Calculate the quadraticDistance:
@@ -281,6 +280,87 @@ classdef OmcronBaseClass < handle
             end
 
         end
+        
+        %% Create a 
+        function CreateEllipsoidLinks(self)
+            
+            % Get the link of the robot:
+            links = self.model.links;
+
+            % Get the number of links
+            numLinks = length(links);
+
+            % Get Transform of each link
+            transforms = self.GetLinkPoses(self.model.getpos);
+
+            % Allocate the struct
+            ellipsoids = struct('center', [], 'radii', [], 'X', {}, 'Y', {}, 'Z', {});
+
+            % For each link, calculate ellipsoid:
+            for i = 1:numLinks
+                % The ellipsoid's center is midway between the link's start and end.
+                startPoint = transforms(1:3, 4, i)';
+                endPoint = transforms(1:3, 4, i+1)';
+                center = (startPoint + endPoint) / 2;
+
+                % Calculate link's length
+                linkLength = norm(endPoint - startPoint);
+
+                % Set ellipsoid's radii
+                majorRadius = (linkLength / 2);
+                intermediateRadius = 0.3 * linkLength;
+
+                % Find the direction vector from two link:
+                directionVector = endPoint - startPoint;
+                unitVector = directionVector / norm(directionVector)
+                
+                norm(unitVector)
+                % Assuming majorRadius is always larger than intermediateRadius
+                if abs(unitVector(3)) == 1
+                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), intermediateRadius, intermediateRadius, majorRadius);
+                elseif abs(unitVector(1)) == 1
+                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), majorRadius, intermediateRadius, intermediateRadius);
+                elseif abs(unitVector(2)) == 1
+                    [X, Y, Z] = ellipsoid(center(1), center(2), center(3), intermediateRadius, majorRadius, intermediateRadius);
+                end
+
+                % Store in ellipsoids struct
+                ellipsoids(i).center = center;
+                ellipsoids(i).X = X;
+                ellipsoids(i).Y = Y;
+                ellipsoids(i).Z = Z;
+
+                % Plot the ellipsoid
+                hold on;
+                surf(X, Y, Z); % 'FaceAlpha' for transparency
+            end
+
+        end
+
+        %% CheckSelfCollision
+        function isCollising = CheckSelfCollision(self)
+            
+            % Get the transform of each link:
+            transforms = self.GetLinkPoses(self.model.getpos);
+
+            % Get the initial parameters:
+            numLinks = size(transforms, 3);
+            
+            % Calculate face normals:
+            faceNormals = zeros(numLinks, 3);
+
+            for i = 1:numLinks-1
+                
+            end
+
+            % Check for collisions:
+            for i = 2:numLinks
+                
+                % Get the first l
+            end
+        end
+
+        % --------------- RMRC CONTROL BELOW THIS AREA -------------------% 
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
@@ -366,8 +446,6 @@ classdef OmcronBaseClass < handle
             % Convert the rotation vector to a 3x1 angular error vector
             orientationDiff = angle(:,1:3)'*angle(:,4);
         end
-
-        %% 
         
     end
 end

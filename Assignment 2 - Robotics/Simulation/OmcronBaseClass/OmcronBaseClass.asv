@@ -115,6 +115,8 @@ classdef OmcronBaseClass < handle
             end
             drawnow();
         end
+        
+        % -------------------- Check Colision in this Area ---------------%
 
         %% GetLinkPoses Function:
         function [transforms] = GetLinkPoses(self, q)
@@ -218,9 +220,6 @@ classdef OmcronBaseClass < handle
         end
 
         %% QuadraticDistance function
-        %
-        %
-        %
         function [distances, conditions] = QuadraticDistance(self, points, centerPoint, radii)
 
             % Calculate the quadraticDistance:
@@ -281,10 +280,45 @@ classdef OmcronBaseClass < handle
             end
 
         end
+        
+        %% Create a 
+        function CreateEllipsoidLinks(self)
+
+            % Get Transform of each link
+            self.GetLinkPoses(self.model.getpos);
+
+            % Alloc
+
+        end
+
+        %% CheckSelfCollision
+        function isCollising = CheckSelfCollision(self)
+            
+            % Get the transform of each link:
+            transforms = self.GetLinkPoses(self.model.getpos);
+
+            % Get the initial parameters:
+            numLinks = size(transforms, 3);
+            
+            % Calculate face normals:
+            faceNormals = zeros(numLinks, 3);
+
+            for i = 1:numLinks-1
+                
+            end
+
+            % Check for collisions:
+            for i = 2:numLinks
+                
+                % Get the first l
+            end
+        end
+
+        % --------------- RMRC CONTROL BELOW THIS AREA -------------------% 
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
-        % Cartesian
+        % Cartesian plane.
         function RMRC(self, point1, point2)
 
             % Initial parameter
@@ -305,7 +339,8 @@ classdef OmcronBaseClass < handle
 
             % Solve for Initial Joint Angles
             qMatrix(1, :) = self.model.getpos;
-
+            
+            % Get the desired orientation of the end-effector:
             desiredPose = self.model.fkine(self.model.getpos).T;
             desiredOre  = desiredPose(1:3, 1:3);
 
@@ -326,12 +361,16 @@ classdef OmcronBaseClass < handle
                 
                 % Measure of Manipulability
                 mu = sqrt(det(J*J'));
+                
+                % If manipulability is less than given threshold
+                if mu < threshold 
+                    % Damping coefficient (example value)
+                    lambda = 0.01; 
 
-                if mu < threshold % If manipulability is less than given threshold
-                    lambda = 0.01; % Damping coefficient (example value)
-                    invJ = (J'*J + lambda^2*eye(6))\J'; % Apply Damped Least Squares pseudoinverse
+                    % Apply Damped Least Squares pseudoinverse
+                    invJ = (J'*J + lambda^2*eye(6))\J';
                 else
-                    invJ = pinv(J); % Don't use DLS
+                    invJ = pinv(J);
                 end
 
                 % Solve velocities via RMRC:
@@ -361,5 +400,6 @@ classdef OmcronBaseClass < handle
             % Convert the rotation vector to a 3x1 angular error vector
             orientationDiff = angle(:,1:3)'*angle(:,4);
         end
+        
     end
 end
