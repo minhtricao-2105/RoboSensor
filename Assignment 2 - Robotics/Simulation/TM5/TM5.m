@@ -41,12 +41,12 @@ classdef TM5 < OmcronBaseClass
 
         %% Create Model Function:
         function CreateModel(self)
-            link(1) = Link('d',0.146,'a',0,'alpha',pi/2,'qlim',deg2rad([-360 360]), 'offset',0);
-            link(2) = Link('d',0,'a',-0.329,'alpha',0,'qlim', deg2rad([-360 360]), 'offset',0);
-            link(3) = Link('d',0,'a',-0.3115,'alpha',0,'qlim', deg2rad([-360 360]), 'offset', 0);
-            link(4) = Link('d',0.124,'a',0,'alpha',pi/2,'qlim',deg2rad([-360 360]),'offset', 0);
-            link(5) = Link('d',0.110,'a',0,'alpha',-pi/2,'qlim',deg2rad([-360,360]), 'offset',0);
-            link(6) = Link('d',0.1132,'a',0,'alpha',0,'qlim',deg2rad([-360,360]), 'offset', 0);
+            link(1) = Link('d',0.146,'a',0,'alpha',pi/2,'qlim',deg2rad([-270, 270]), 'offset',0);
+            link(2) = Link('d',0,'a',-0.329,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
+            link(3) = Link('d',0,'a',-0.3115,'alpha',0,'qlim', deg2rad([-155, 155]), 'offset', 0);
+            link(4) = Link('d',0.124,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
+            link(5) = Link('d',0.110,'a',0,'alpha',-pi/2,'qlim',deg2rad([-180,180]), 'offset',0);
+            link(6) = Link('d',0.1132,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', 0);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
