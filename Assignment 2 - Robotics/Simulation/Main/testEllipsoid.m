@@ -18,4 +18,4 @@ ttRobotTM5Mobile = TM5Mobile(transl(0,0,0.8)*trotz(pi), qHome, workspace);
 hold on 
 % Call the ellipsoid function:
 
-check = ttRobotTM5Mobile.CreateEllipsoidLinks(true)
+ttRobotTM5Mobile.CreateEllipsoidLinks(true)

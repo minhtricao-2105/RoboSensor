@@ -21,6 +21,8 @@ classdef OmcronBaseClass < handle
         baseTransform = eye(4);
 
         % The constraint variable of the robot platform:
+        linkEllipsoid = struct('center', {{}}, 'radii', {{}}, 'A', {{}}, 'X', {{}}, 'Y', {{}}, 'Z', {{}});
+
     end
 
     properties (Hidden)
@@ -282,29 +284,20 @@ classdef OmcronBaseClass < handle
         end
 
         %% Create a
-        function linkEllipsoids = CreateEllipsoidLinks(self, visualize)
+        function CreateEllipsoidLinks(self, visualize)
 
             % Check the input argument of this function:
             if nargin < 2
                 visualize = false;
             end
-
-            % Get the link of the robot:
-            links = self.model.links;
+            
+            self.GetRadiusEllipsoid();
 
             % Get the number of links
-            numLinks = length(links);
+            numLinks = self.model.n;
 
             % Get Transform of each link
             transforms = self.GetLinkPoses(self.model.getpos);
-
-            % Initialize linkEllipsoids:
-            linkEllipsoids(numLinks).center = [];
-            linkEllipsoids(numLinks).radii = [];
-            linkEllipsoids(numLinks).A = [];
-            linkEllipsoids(numLinks).X = [];
-            linkEllipsoids(numLinks).Y = [];
-            linkEllipsoids(numLinks).Z = [];
 
             % For each link, calculate ellipsoid:
             for i = 1:numLinks
@@ -314,35 +307,20 @@ classdef OmcronBaseClass < handle
                 endPoint = transforms(1:3, 4, i+1)';
                 center = (startPoint + endPoint) / 2;
 
-                % Extract the translation part for the center of the ellipsoid:
-                linkEllipsoids(i).center = center;
-
-                % Set ellipsoid's radii
-                radius = (endPoint - startPoint)/2;
-
-                %  Setup the radii
-                if center(1) == startPoint(1) && center(3) == startPoint(3)
-                    semiAxes = [0.08, radius(2), 0.08];
-                
-                elseif center(3) == startPoint(3)
-                    semiAxes = [radius(1), 0.08, 0.08];
-                
-                elseif center(1) == startPoint(1)
-                    semiAxes = [0.08, 0.08, radius(3)];
-
-                end
-
                 % Correct the link 3:
                 if i == 2
                     Zdirection = orientation(1:3,3);
                     center = center + 0.15 * Zdirection';
                 end
 
-                % Store to the output:
-                linkEllipsoids(i).radii = semiAxes;
+                % Center of ellipsoid for each links
+                self.linkEllipsoid.center{i} = center;
 
-                % Generate the ellipsoid:
-                [X,Y,Z] = ellipsoid(center(1), center(2), center(3), semiAxes(1), semiAxes(2), semiAxes(3), 50);
+                % Define radius for each ellipsoids
+                semiAxes = self.linkEllipsoid.radii{i};
+
+                % Generate the ellipsoids for each links
+                [X,Y,Z] = ellipsoid(center(1), center(2), center(3), semiAxes(1), semiAxes(2), semiAxes(3));
 
                 % Get the orientation:
                 orientation = transforms(1:3, 1:3, i+1);
@@ -360,13 +338,13 @@ classdef OmcronBaseClass < handle
                 end
         
                 % Store it the output of this function:
-                linkEllipsoids(i).X = X;
-                linkEllipsoids(i).Y = Y;
-                linkEllipsoids(i).Z = Z;
+                self.linkEllipsoid.X{i} = X;
+                self.linkEllipsoid.Y{i} = Y;
+                self.linkEllipsoid.Z{i} = Z;
                 
                 % Get the matrix that defines the shape of the ellipsoid
-                A = diag([linkEllipsoids(i).radii(1)^-2, linkEllipsoids(i).radii(2)^-2, linkEllipsoids(i).radii(3)^-2]);
-                linkEllipsoids(i).A = orientation * A * orientation';
+                A = diag([semiAxes(1)^-2, semiAxes(2)^-2, semiAxes(3)^-2]);
+                self.linkEllipsoid.A{i} = orientation * A * orientation';
 
 
                 % Update the ellipsoid with the rotated points:
@@ -378,6 +356,36 @@ classdef OmcronBaseClass < handle
             end
 
         end
+
+        %% Define radius
+        function GetRadiusEllipsoid(self)
+            q = zeros(1,self.model.n);
+            tr = GetLinkPoses(self, q);
+
+            sizeOfLinks = size(tr);
+
+            for i=1:sizeOfLinks(3)-1
+                base = tr(1:3,4,i)';
+         
+                frame = tr(1:3,4,i+1)';
+                
+                radius = (frame - base)/2;
+
+                centerPoint = (frame + base)/2;
+
+                if(centerPoint(1) == base(1) && centerPoint(3) == base(3))
+                    radii = [0.08, radius(2), 0.08];
+                    
+                elseif(centerPoint(3) == base(3))
+                    radii = [radius(1), 0.08, 0.08];
+
+                elseif(centerPoint(1) == base(1))
+                    radii = [0.08, 0.08, radius(3)];
+                end
+                self.linkEllipsoid.radii{i} = radii;
+            end
+        end
+
 
         %% CheckSelfCollision
         function isCollision = CheckSelfCollision(self)
