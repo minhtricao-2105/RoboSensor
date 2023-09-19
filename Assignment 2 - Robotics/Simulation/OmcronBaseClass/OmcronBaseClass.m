@@ -301,6 +301,7 @@ classdef OmcronBaseClass < handle
             % Initialize linkEllipsoids:
             linkEllipsoids(numLinks).center = [];
             linkEllipsoids(numLinks).radii = [];
+            linkEllipsoids(numLinks).A = [];
             linkEllipsoids(numLinks).X = [];
             linkEllipsoids(numLinks).Y = [];
             linkEllipsoids(numLinks).Z = [];
@@ -308,40 +309,33 @@ classdef OmcronBaseClass < handle
             % For each link, calculate ellipsoid:
             for i = 1:numLinks
 
-                % Get the DH parameter:
-                L = links(1,i);
-
                 % The ellipsoid's center is midway between the link's start and end.
                 startPoint = transforms(1:3, 4, i)';
                 endPoint = transforms(1:3, 4, i+1)';
                 center = (startPoint + endPoint) / 2;
 
+                % Extract the translation part for the center of the ellipsoid:
+                linkEllipsoids(i).center = center;
+
+                % Set ellipsoid's radii
+                radius = (endPoint - startPoint)/2;
+
+                %  Setup the radii
+                if center(1) == startPoint(1) && center(3) == startPoint(3)
+                    semiAxes = [0.08, radius(2), 0.08];
+                
+                elseif center(3) == startPoint(3)
+                    semiAxes = [radius(1), 0.08, 0.08];
+                
+                elseif center(1) == startPoint(1)
+                    semiAxes = [0.08, 0.08, radius(3)];
+
+                end
+
                 % Correct the link 3:
                 if i == 2
                     Zdirection = orientation(1:3,3);
                     center = center + 0.15 * Zdirection';
-                end
-
-                % Extract the translation part for the center of the ellipsoid:
-                linkEllipsoids(i).center = center;
-
-                % Calculate link's length
-                linkLength = norm(endPoint - startPoint);
-
-                % Set ellipsoid's radii
-                majorRadius = (linkLength / 2);
-                intermediateRadius = linkLength;
-
-                % Set ellipsoid's radii
-                if L.a ~= 0
-                    semiAxes = [majorRadius, intermediateRadius*0.3, intermediateRadius*0.3];
-                elseif L.d ~= 0
-                    semiAxes = [intermediateRadius*0.5, majorRadius*2.1, intermediateRadius*0.5];
-                end
-
-                % Correct the link 6:
-                if i == 6
-                    semiAxes = [intermediateRadius*0.5, intermediateRadius*0.5, majorRadius];
                 end
 
                 % Store to the output:
@@ -364,11 +358,16 @@ classdef OmcronBaseClass < handle
                     Y(j) = rotatedPoint(2);
                     Z(j) = rotatedPoint(3);
                 end
-
+        
                 % Store it the output of this function:
                 linkEllipsoids(i).X = X;
                 linkEllipsoids(i).Y = Y;
                 linkEllipsoids(i).Z = Z;
+                
+                % Get the matrix that defines the shape of the ellipsoid
+                A = diag([linkEllipsoids(i).radii(1)^-2, linkEllipsoids(i).radii(2)^-2, linkEllipsoids(i).radii(3)^-2]);
+                linkEllipsoids(i).A = orientation * A * orientation';
+
 
                 % Update the ellipsoid with the rotated points:
                 if visualize == true
