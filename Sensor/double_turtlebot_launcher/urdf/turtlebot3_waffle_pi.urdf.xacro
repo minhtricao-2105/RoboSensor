@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot name="turtlebot3_waffle_pi" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find turtlebot3_description)/urdf/common_properties.xacro"/>
-  <xacro:include filename="$(find double_turtlebot_launcher)/urdf/turtlebot3_waffle_pi_aruco.gazebo.xacro"/>
+  <xacro:include filename="$(find double_turtlebot_launcher)/urdf/turtlebot3_waffle_pi.gazebo.xacro"/>
   <!-- <xacro:arg name="robotname"    default="tb3_1"/> -->
 
   <link name="base_footprint"/>
@@ -36,24 +36,6 @@
                izz="1.4612727e-02" />
     </inertial>
   </link>
-<!-- aruco link -->
-  <joint name="aruco_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="aruco_link" />
-    <origin xyz="-0.2 0 0.08" rpy="0 -1.57 0"/>
-  </joint>
-
-  <link name="aruco_link">
-    <!-- Attach the ArUco marker to the back of the TurtleBot -->
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://double_turtlebot_launcher/aruco_marker/aruco_marker1.dae" scale="0.15 0.15 0.15"/>
-      </geometry>
-      <material name="light_black"/>
-    </visual>
-  </link>
-<!-- aruco link -->
 
   <joint name="wheel_left_joint" type="continuous">
     <parent link="base_link"/>
