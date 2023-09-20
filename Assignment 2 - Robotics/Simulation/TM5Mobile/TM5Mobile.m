@@ -3,6 +3,9 @@ classdef TM5Mobile < OmcronBaseClass
     %----------------------------------- Properties Hidden -------------------------------%
     properties(Access = public)
         plyFileNameStem = 'TM5';
+
+        % Create a gripper object
+        Gripper;
     end
 
     methods
@@ -36,6 +39,9 @@ classdef TM5Mobile < OmcronBaseClass
             % Plot the UR3 model on simulation environment
             self.CreateModel();
             self.PlotAndColourRobot();
+
+            % % Create a griper
+            % self.Gripper = gripper(self.baseTransform);
         end
 
         %% Create Model Function:
