@@ -290,7 +290,7 @@ classdef OmcronBaseClass < handle
             if nargin < 2
                 visualize = false;
             end
-            
+
             self.GetRadiusEllipsoid();
 
             % Get the number of links
@@ -336,12 +336,12 @@ classdef OmcronBaseClass < handle
                     Y(j) = rotatedPoint(2);
                     Z(j) = rotatedPoint(3);
                 end
-        
+
                 % Store it the output of this function:
                 self.linkEllipsoid.X{i} = X;
                 self.linkEllipsoid.Y{i} = Y;
                 self.linkEllipsoid.Z{i} = Z;
-                
+
                 % Get the matrix that defines the shape of the ellipsoid
                 A = diag([semiAxes(1)^-2, semiAxes(2)^-2, semiAxes(3)^-2]);
                 self.linkEllipsoid.A{i} = orientation * A * orientation';
@@ -366,16 +366,16 @@ classdef OmcronBaseClass < handle
 
             for i=1:sizeOfLinks(3)-1
                 base = tr(1:3,4,i)';
-         
+
                 frame = tr(1:3,4,i+1)';
-                
+
                 radius = (frame - base)/2;
 
                 centerPoint = (frame + base)/2;
 
                 if(centerPoint(1) == base(1) && centerPoint(3) == base(3))
                     radii = [0.08, radius(2), 0.08];
-                    
+
                 elseif(centerPoint(3) == base(3))
                     radii = [radius(1), 0.08, 0.08];
 
@@ -399,7 +399,7 @@ classdef OmcronBaseClass < handle
             % Loop over all pairs of ellipsoids to check for collision
             for i = 1:numEllipsoids-2
                 for j = i+2:numEllipsoids
-                    
+
                     % Get the center and radii of the first ellipsoid
                     center1 = linkEllipsoids(i).center;
                     radii1 = linkEllipsoids(i).radii;
@@ -409,7 +409,7 @@ classdef OmcronBaseClass < handle
 
                     % Check if any point from ellipsoid j is inside ellipsoid i
                     [~, conditions] = self.QuadraticDistance(points2, center1, radii1);
-                    
+
                     % Count the number of points that are inside the ellipsoid
                     collisionPoints = sum(conditions == 0)
 
@@ -431,45 +431,54 @@ classdef OmcronBaseClass < handle
         %% RMRC:
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
-        function RMRC(self, point1, point2)
 
-            % Initial parameter
+        function rmrc(self, startPose, endPose, qGuess)
+
+            % Set up the initial parameters:
             t = 2;                              % Total Time of motion
             steps = 50;                         % Number of steps
             deltaT = t/steps;                   % Small Angle Change
             threshold = 0.2;                    % Threshhold value for manipulability
-            waypoints = zeros(steps,3);         % Waypoints matrix
+            waypoints = zeros(steps,3);              % Waypoints matrix
 
-            % Linear interpolation between the two points
+            % Allocate array data:
+            qMatrix = zeros(steps, self.model.n);      % Array for joint Angels:
+
+            % Set up trajectory:
+            startPoint = startPose(1:3,4)';
+            endPoint = endPose(1:3,4)';
+
             for i = 1:steps
                 t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
-                waypoints(i, :) = (1 - t) * point1 + t * point2;
+                waypoints(i, :) = (1 - t) * startPoint + t * endPoint;
             end
 
-            % Create a matrix of joint angles
-            qMatrix = nan(steps,self.model.n);
+            % Solve joint angles to achieve first waypoint:
+            qMatrix(1,:) = self.model.ikcon(startPose, qGuess);
 
-            % Solve for Initial Joint Angles
-            qMatrix(1, :) = self.model.getpos;
-
-            % Get the desired orientation of the end-effector:
-            desiredPose = self.model.fkine(self.model.getpos).T;
-            desiredOre  = desiredPose(1:3, 1:3);
+            % Animate the first q
+            self.model.animate(qMatrix(1,:));
 
             % Track the trajectory with RMRC:
-            for i = 1:steps-1
+            for i = 1:steps -1
 
-                % Find the linear velocity vector at this current pose:
-                xdot = (waypoints(i + 1, :) - waypoints(i, :)) / deltaT;
+                % Get forward transformation at current joint state:
+                T = self.model.fkine(qMatrix(i,:)).T;
+
+                % Get Position Error from next waypoint:
+                deltaX = waypoints(i+1, :) - T(1:3,4)';
+
+                % Get the linear velocity:
+                linearVelocity = (1/deltaT)*deltaX;
+
+                % Get the angular velocity:
+                angularVelocity = [0,0,0];
+
+                % Calculate the end-effector velocity to reach next waypoint:
+                xDot = [linearVelocity'; angularVelocity'];
 
                 % Find the Jacobian Matrix at the current pose:
                 J = self.model.jacob0(qMatrix(i,:));
-
-                % Calculate the different between the current pose and the desired pose:
-                orientationDiff = self.CalculateOriDiff(desiredOre, qMatrix(i,:));
-
-                % Combine Velocity:
-                combinedVelocity = [xdot';  orientationDiff];
 
                 % Measure of Manipulability
                 mu = sqrt(det(J*J'));
@@ -480,13 +489,22 @@ classdef OmcronBaseClass < handle
                     lambda = 0.01;
 
                     % Apply Damped Least Squares pseudoinverse
-                    invJ = (J'*J + lambda^2*eye(6))\J';
+                    invJ = J'*inv(J*J'+lambda*eye(6));
                 else
                     invJ = pinv(J);
                 end
 
                 % Solve velocities via RMRC:
-                qdot = invJ*combinedVelocity;
+                qdot = invJ*xDot;
+
+                % Consider the joint limit:
+                for j = 1:self.model.n
+                    if qMatrix(i,j) + deltaT*qdot < self.model.qlim(j,1)
+                        qdot = 0; % Stop the motor
+                    elseif qMatrix(i,j) + deltaT*qdot > self.model.qlim(j,2)
+                        qdot = 0; % Stop the motor
+                    end
+                end
 
                 % Update next joint state based on joint velocities:
                 qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot';
@@ -494,23 +512,8 @@ classdef OmcronBaseClass < handle
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
                 pause(0.05)
+
             end
-        end
-
-        %% orientationDiff
-        function orientationDiff = CalculateOriDiff(self, desiredOre, nextQPosition)
-
-            currentPose = self.model.fkine(nextQPosition).T;
-            currentOre  = currentPose(1:3,1:3);
-
-            % Find the rotation matrix between the desired pose and the current:
-            rotationMatrix = desiredOre*currentOre';
-
-            % Convert the rotation matrix to a rotation vector (axis-angle representation)
-            angle = rotm2axang(rotationMatrix);
-
-            % Convert the rotation vector to a 3x1 angular error vector
-            orientationDiff = angle(:,1:3)'*angle(:,4);
         end
 
     end
