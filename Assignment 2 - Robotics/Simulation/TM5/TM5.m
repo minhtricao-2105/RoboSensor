@@ -18,7 +18,7 @@ classdef TM5 < OmcronBaseClass
             end
 
             if nargin < 2
-                qHome = [0, 0, 0, 0, 0, 0, 0];  % Default the homing position of the robot if not provided
+                qHome = [0, 0, 0, 0, 0, 0];  % Default the homing position of the robot if not provided
             end
 
             if nargin < 3
