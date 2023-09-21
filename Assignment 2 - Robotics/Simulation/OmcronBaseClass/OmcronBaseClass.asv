@@ -283,7 +283,7 @@ classdef OmcronBaseClass < handle
 
         end
 
-        %% Create a
+        %% CreateEllipsoidLinks
         function CreateEllipsoidLinks(self, visualize)
 
             % Check the input argument of this function:
@@ -426,96 +426,113 @@ classdef OmcronBaseClass < handle
 
         end
 
+        % --------------- Trajectory and Inverse Kinematic is here -------%
+        %% SolveValidIkine
+        function qFinal = SolveValidIkine(self, desiredT, qGuess)
+
+            % Generate variations around the current configuration
+            deltaRot = pi/8;
+
+            variations = [
+                deltaRot, 0, 0, 0, 0, 0;
+                -delta_rot, 0, 0, 0, 0, 0;
+                0, delta_rot, 0, 0, 0, 0;
+                0, -delta_rot, 0, 0, 0, 0;
+                0, 0, delta_rot, 0, 0, 0;
+                0, 0, -delta_rot, 0, 0, 0;
+                ];
+
+            % Add variations to current configuration
+            guesses = bsxfun(@plus, qGuess, variations);
+
+            % Generate solutions based on the guesses above:
+            solutions = [];
+            for i = 1:size(guesses, 1)
+                q = self.model.ikcon(desiredT, guesses(i, :));
+                if ~isempty(q)
+                    solutions = [solutions; q];
+                end
+            end
+            % If no solutions found, return an error
+            if isempty(solutions)
+                error('No IK solutions found');
+            end
+
+            % Separate solutions into elbow up and others
+            elbowUpSolutions = solutions(solutions(:,3) > 0, :);
+            otherSolutions = solutions(solutions(:,3) <= 0, :);
+
+            % Choose the best "elbow up" solution, or if none exist, the best other solution
+            if ~isempty(elbowUpSolutions)
+                distances = sum((elbowUpSolutions - currentQ).^2, 2);
+                [~, idx] = min(distances);
+                qFinal = elbowUpSolutions(idx, :);
+            else
+                distances = sum((otherSolutions - currentQ).^2, 2);
+                [~, idx] = min(distances);
+                qFinal = otherSolutions(idx, :);
+            end
+        end
+        
+        %% AnimatePath
+        function AnimatePath(self, path, eStop, object)
+
+            % Setup the initial parameter:
+            moveObject = true;
+            
+            % If there is no object input => No need to move the object
+            if nargin < 4
+                moveObject = false;
+            else
+                % Get the transformation between the EE and the object
+                eeTr = self.model.fkine(self.model.getpos).T;
+                objectEE = inv(eeTr)*object.baseTr;
+            end
+
+            % If there is no input of the e-stop
+            if nargin < 3
+                eStop = false;
+            end
+            
+            % Animate the path:
+            for i = 1:size(path,1)
+                
+                % Check if the estop is pressed or not:
+                if eStop == false
+                    % Get the transformation of the end-effector:
+                    eeTr = self.model.fkine(path(i,:)).T;
+
+                    % Animate the robot:
+                    self.model.animate(path(i,:));
+
+                    % Animate the movement of the object:
+                    if moveObject
+                        transform = eeTr*objectEE;
+                        object.moveObject(transform);
+                    end
+
+                    % Create a small pause:
+                    pause(0.001);
+
+                else
+                    print('[SYSTEM]: E-STOP IS TRIGGERED !!');
+                    i = i - 1;
+                end
+            end
+        end
+
+        
+        %% Move
+         
         % --------------- RMRC CONTROL BELOW THIS AREA -------------------%
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
-        function rmrcLockEE(self, point1, point2)
 
-            % Initial parameter
-            t = 2;                              % Total Time of motion
-            steps = 50;                         % Number of steps
-            deltaT = t/steps;                   % Small Angle Change
-            threshold = 0.2;                    % Threshhold value for manipulability
-            waypoints = zeros(steps,3);         % Waypoints matrix
-
-            % Linear interpolation between the two points
-            for i = 1:steps
-                t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
-                waypoints(i, :) = (1 - t) * point1 + t * point2;
-            end
-
-            % Create a matrix of joint angles
-            qMatrix = nan(steps,self.model.n);
-
-            % Solve for Initial Joint Angles
-            qMatrix(1, :) = self.model.getpos;
-
-            % Get the desired orientation of the end-effector:
-            desiredPose = self.model.fkine(self.model.getpos).T;
-            desiredOre  = desiredPose(1:3, 1:3);
-
-            % Track the trajectory with RMRC:
-            for i = 1:steps-1
-
-                % Find the linear velocity vector at this current pose:
-                xdot = (waypoints(i + 1, :) - waypoints(i, :)) / deltaT;
-
-                % Find the Jacobian Matrix at the current pose:
-                J = self.model.jacob0(qMatrix(i,:));
-
-                % Calculate the different between the current pose and the desired pose:
-                orientationDiff = self.CalculateOriDiff(desiredOre, qMatrix(i,:));
-
-                % Combine Velocity:
-                combinedVelocity = [xdot';  orientationDiff];
-
-                % Measure of Manipulability
-                mu = sqrt(det(J*J'));
-
-                % If manipulability is less than given threshold
-                if mu < threshold
-                    % Damping coefficient (example value)
-                    lambda = 0.01;
-
-                    % Apply Damped Least Squares pseudoinverse
-                    invJ = (J'*J + lambda^2*eye(6))\J';
-                else
-                    invJ = pinv(J);
-                end
-
-                % Solve velocities via RMRC:
-                qdot = invJ*combinedVelocity;
-
-                % Update next joint state based on joint velocities:
-                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot';
-
-                % Animate the path:
-                self.model.animate(qMatrix(i+1,:));
-                pause(0.05)
-            end
-        end
-
-        %% orientationDiff
-        function orientationDiff = CalculateOriDiff(self, desiredOre, nextQPosition)
-
-            currentPose = self.model.fkine(nextQPosition).T;
-            currentOre  = currentPose(1:3,1:3);
-
-            % Find the rotation matrix between the desired pose and the current:
-            rotationMatrix = desiredOre*currentOre';
-
-            % Convert the rotation matrix to a rotation vector (axis-angle representation)
-            angle = rotm2axang(rotationMatrix);
-
-            % Convert the rotation vector to a 3x1 angular error vector
-            orientationDiff = angle(:,1:3)'*angle(:,4);
-        end
-
-        %% RMRC
-        function rmrc(self, startPose, endPose, qGuess, lockEE)
-
+        function rmrc(self, startPose, endPose, qGuess, object)
+            
+            % Check 
             % Set up the initial parameters:
             t = 2;                              % Total Time of motion
             steps = 50;                         % Number of steps
@@ -525,8 +542,6 @@ classdef OmcronBaseClass < handle
 
             % Allocate array data:
             qMatrix = zeros(steps, self.model.n);      % Array for joint Angels:
-            theta = zeros(3,steps);                    % Array for roll-pitch-yaw angles
-            qdot = zeros(steps,self.model.n);          % Array for joint velocities
 
             % Set up trajectory:
             startPoint = startPose(1:3,4)';
@@ -535,14 +550,8 @@ classdef OmcronBaseClass < handle
             for i = 1:steps
                 t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
                 waypoints(i, :) = (1 - t) * startPoint + t * endPoint;
-
-                if ~lockEE
-                    theta(1,i) = 0; % Roll angle
-                    theta(2,i) = 5*pi/9; % Pitch angle
-                    theta(3,i) = 0; % Yaw angle
-                end
             end
-            
+
             % Solve joint angles to achieve first waypoint:
             qMatrix(1,:) = self.model.ikcon(startPose, qGuess);
 
@@ -558,23 +567,11 @@ classdef OmcronBaseClass < handle
                 % Get Position Error from next waypoint:
                 deltaX = waypoints(i+1, :) - T(1:3,4)';
 
-                % Get next RPY angles, covert to rotation Matrix:
-                Rd = rpy2r(theta(1,i+1), theta(2,i+1), theta(3,i+1));
-
-                % Get current end-effector rotation matrix:
-                Ra = T(1:3, 1:3);
-
-                % Calculate the rotation matrix error:
-                Rdot = (1/deltaT)*(Rd - Ra);
-
-                % Find the Skew Symmetric:
-                S = Ra'*Rdot;
-
                 % Get the linear velocity:
                 linearVelocity = (1/deltaT)*deltaX;
 
                 % Get the angular velocity:
-                angularVelocity = [S(3,2), S(1,3), S(2,1)];
+                angularVelocity = [0,0,0];
 
                 % Calculate the end-effector velocity to reach next waypoint:
                 xDot = [linearVelocity'; angularVelocity'];
@@ -591,33 +588,31 @@ classdef OmcronBaseClass < handle
                     lambda = 0.01;
 
                     % Apply Damped Least Squares pseudoinverse
-                    invJ = (J'*J + lambda^2*eye(6))\J';
+                    invJ = J'*inv(J*J'+lambda*eye(6));
                 else
                     invJ = pinv(J);
                 end
 
                 % Solve velocities via RMRC:
-                qdot(i,:) = invJ*xDot
-                
+                qdot = invJ*xDot;
+
                 % Consider the joint limit:
                 for j = 1:self.model.n
                     if qMatrix(i,j) + deltaT*qdot < self.model.qlim(j,1)
-                        qdot(i,:) = 0; % Stop the motor
+                        qdot = 0; % Stop the motor
                     elseif qMatrix(i,j) + deltaT*qdot > self.model.qlim(j,2)
-                        qdot(i,:) = 0; % Stop the motor
+                        qdot = 0; % Stop the motor
                     end
                 end
 
                 % Update next joint state based on joint velocities:
-                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot(i,:)';
+                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot';
 
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
                 pause(0.05)
 
             end
-
-
         end
 
     end

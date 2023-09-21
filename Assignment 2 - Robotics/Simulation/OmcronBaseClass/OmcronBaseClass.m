@@ -283,7 +283,7 @@ classdef OmcronBaseClass < handle
 
         end
 
-        %% Create a
+        %% CreateEllipsoidLinks
         function CreateEllipsoidLinks(self, visualize)
 
             % Check the input argument of this function:
@@ -426,13 +426,123 @@ classdef OmcronBaseClass < handle
 
         end
 
+        % --------------- Trajectory and Inverse Kinematic is here -------%
+        %% SolveValidIkine
+        function qFinal = SolveValidIkine(self, desiredT, qGuess)
+
+            % Generate variations around the current configuration
+            deltaRot = pi/8;
+
+            variations = [
+                deltaRot, 0, 0, 0, 0, 0;
+                -delta_rot, 0, 0, 0, 0, 0;
+                0, delta_rot, 0, 0, 0, 0;
+                0, -delta_rot, 0, 0, 0, 0;
+                0, 0, delta_rot, 0, 0, 0;
+                0, 0, -delta_rot, 0, 0, 0;
+                ];
+
+            % Add variations to current configuration
+            guesses = bsxfun(@plus, qGuess, variations);
+
+            % Generate solutions based on the guesses above:
+            solutions = [];
+            for i = 1:size(guesses, 1)
+                q = self.model.ikcon(desiredT, guesses(i, :));
+                if ~isempty(q)
+                    solutions = [solutions; q];
+                end
+            end
+            % If no solutions found, return an error
+            if isempty(solutions)
+                error('No IK solutions found');
+            end
+
+            % Separate solutions into elbow up and others
+            elbowUpSolutions = solutions(solutions(:,3) > 0, :);
+            otherSolutions = solutions(solutions(:,3) <= 0, :);
+
+            % Choose the best "elbow up" solution, or if none exist, the best other solution
+            if ~isempty(elbowUpSolutions)
+                distances = sum((elbowUpSolutions - currentQ).^2, 2);
+                [~, idx] = min(distances);
+                qFinal = elbowUpSolutions(idx, :);
+            else
+                distances = sum((otherSolutions - currentQ).^2, 2);
+                [~, idx] = min(distances);
+                qFinal = otherSolutions(idx, :);
+            end
+        end
+        
+        %% AnimatePath
+        function AnimatePath(self, path, eStop, object)
+
+            % Setup the initial parameter:
+            moveObject = true;
+            
+            % If there is no object input => No need to move the object
+            if nargin < 4
+                moveObject = false;
+            else
+                % Get the transformation between the EE and the object
+                eeTr = self.model.fkine(self.model.getpos).T;
+                objectEE = inv(eeTr)*object.baseTr;
+            end
+
+            % If there is no input of the e-stop
+            if nargin < 3
+                eStop = false;
+            end
+            
+            % Animate the path:
+            for i = 1:size(path,1)
+                
+                % Check if the estop is pressed or not:
+                if eStop == false
+                    % Get the transformation of the end-effector:
+                    eeTr = self.model.fkine(path(i,:)).T;
+
+                    % Animate the robot:
+                    self.model.animate(path(i,:));
+
+                    % Animate the movement of the object:
+                    if moveObject
+                        transform = eeTr*objectEE;
+                        object.moveObject(transform);
+                    end
+
+                    % Create a small pause:
+                    pause(0.001);
+
+                else
+                    print('[SYSTEM]: E-STOP IS TRIGGERED !!');
+                    i = i - 1;
+                end
+            end
+        end
+
+        
+        %% Move
+         
         % --------------- RMRC CONTROL BELOW THIS AREA -------------------%
 
         %% RMRC:
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
-        function rmrc(self, startPose, endPose, qGuess)
+        function rmrc(self, startPose, endPose, qGuess, object)
+            
+            % Check whenever we want to move the object with the robot:
+            moveObject = true;
+
+            % If there is no object input => No need to move the object
+            if nargin < 5
+                moveObject = false;
+            else
+                % Get the transformation between the EE and the object
+                eeTr = self.model.fkine(self.model.getpos).T;
+                objectEE = inv(eeTr)*object.baseTr;
+            end
 
             % Set up the initial parameters:
             t = 2;                              % Total Time of motion
@@ -511,6 +621,14 @@ classdef OmcronBaseClass < handle
 
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
+                
+                % Animate the movement of the object:
+                if moveObject
+                    eeTr = self.model.fkine(qMatrix(i+1,:)).T;
+                    transform = eeTr*objectEE;
+                    object.moveObject(transform);
+                end
+
                 pause(0.05)
 
             end
