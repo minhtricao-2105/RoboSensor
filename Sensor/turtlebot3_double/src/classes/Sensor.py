@@ -17,11 +17,11 @@ class Sensor:
         self.bridge = CvBridge()
 
         # Subscriber:
-        self.image_sub = rospy.Subscriber('/tb3_1/camera/rgb/image_raw', Image, self.image_callback)
-        self.depth_sub = rospy.Subscriber('/tb3_1/camera/depth/image_raw', Image, self.depth_callback)
+        self.image_sub = rospy.Subscriber('/tb3_0/camera/rgb/image_raw', Image, self.image_callback)
+        self.depth_sub = rospy.Subscriber('/tb3_0/camera/depth/image_raw', Image, self.depth_callback)
 
         # Publisher:
-        self.cmd_vel_pub = rospy.Publisher('/tb3_1/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
 
         # Data Members of this class:
         self.depth_image = None
@@ -65,9 +65,10 @@ class Sensor:
             cx = 320            #principal point x
             cy = 240            #principal point y
 
-            camera_matrix = np.array([fx, 0, cx],
-                                     [0, fy, cy],
-                                     [0,0,1], dtype=np.float64)
+            camera_matrix = np.array([[fx, 0, cx],
+                                    [0, fy, cy],
+                                    [0, 0, 1]], dtype=np.float64)
+
             
             k1 = 0
             k2 = 0
