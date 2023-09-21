@@ -2,6 +2,7 @@
 import rospy
 import cv2 
 from cv_bridge import CvBridge, CvBridgeError
+import numpy as np 
 
 # Import the Sensor message
 from sensor_msgs.msg import Image
@@ -54,6 +55,37 @@ class Sensor:
         markerCorners, markerIds, _= cv2.aruco.detectMarkers(gray, self.dictionary, parameters=self.parameters)
 
         if markerIds is not None:
+            ########################
+            #This function is used to get the rotation matrix and translation matrix 
+            #for reference: https://docs.opencv.org/4.8.0/d9/d6a/group__aruco.html#ga3bc50d61fe4db7bce8d26d56b5a6428a
+            marker_size = 0.1           #replace with real marker size
+
+            fx = 1.085595       #focal length in x axis
+            fy = 1.085595       #focal length in y axis
+            cx = 320            #principal point x
+            cy = 240            #principal point y
+
+            camera_matrix = np.array([fx, 0, cx],
+                                     [0, fy, cy],
+                                     [0,0,1], dtype=np.float64)
+            
+            k1 = 0
+            k2 = 0
+            p1 = 0
+            p2 = 0
+            k3 = 0
+            
+            dist_coeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float64)
+
+            rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
+            
+            print("rotation ", rvecs)
+            print("translation ", tvecs)
+            
+
+            #now use rvecs and tvecs for controller
+            ########################
+
             cv2.aruco.drawDetectedMarkers(cv_image, markerCorners, markerIds)
 
             # Example: Taking the depth value of the first detected marker's center
