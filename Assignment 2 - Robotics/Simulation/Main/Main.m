@@ -7,6 +7,7 @@ close all;
 addpath('../TM5Mobile');
 addpath('../TM5');
 addpath('../OmcronBaseClass');
+addpath('../UR5Modified/')
 
 % Call the setup function:
 SetupEnvironment(eye(4));
@@ -19,9 +20,7 @@ baseTr  = transl(0,0,0.8)*trotz(pi);
 baseTr2 = transl(4,0.25,1);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
-ttRobot = UR5(transl(4,0.25, 0.9));
-ttRobot.model.animate(qHome);
-
+ttRobot = UR5Modified(baseTr2, qHome);
 hold on
 
 % Set up the product:
