@@ -20,3 +20,4 @@ point2(3) = point2(3) - 0.3;
 % point2(2) = point2(2) + 0.12;
 
 ttRobotTM5Mobile.rmrc(tr, tr*transl(-0.2, -0.3, 0.3), ttRobotTM5Mobile.model.getpos);
+
