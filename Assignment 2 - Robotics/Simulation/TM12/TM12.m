@@ -1,14 +1,19 @@
-classdef TM5 < OmcronBaseClass
-    %% TODO: Write description here:
-    %----------------------------------- Properties Hidden -------------------------------%
-    
+classdef TM12 < OmcronBaseClass
+    %% TM12 Omron Robot 5kg payload robot model
+    %
+    % WARNING: This model has been created by UTS students in the subject
+    % 41013. No guarentee is made about the accuracy or correctness of the
+    % of the DH parameters of the accompanying ply files. Do not assume
+    % that this matches the real robot!
+
     properties(Access = public)
-        plyFileNameStem = 'TM5Stand';
+        plyFileNameStem = 'TM12';
     end
+
 
     methods
         %% Constructor
-        function self = TM5(baseTr, qHome, workplaceInput)
+        function self = TM12(baseTr, qHome, workplaceInput)
             % Create the model of the TM5 robot
             self.CreateModel();
 
@@ -24,7 +29,7 @@ classdef TM5 < OmcronBaseClass
             if nargin < 3
                 workplaceInput =  [-1.2, 1.2, -1.2, 1.2, 0, 1.2]; % Default workplace input if not provided
             end
-            
+
             % Setup the home position of the robot:
             self.homeQ = qHome;
 
@@ -39,18 +44,16 @@ classdef TM5 < OmcronBaseClass
             self.PlotAndColourRobot();
         end
 
-        %% Create Model Function:
+        %% CreateModel
         function CreateModel(self)
-            link(1) = Link('d',0.146,'a',0,'alpha',pi/2,'qlim',deg2rad([-270, 270]), 'offset',0);
-            link(2) = Link('d',0,'a',-0.329,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
-            link(3) = Link('d',0,'a',-0.3115,'alpha',0,'qlim', deg2rad([-155, 155]), 'offset', 0);
-            link(4) = Link('d',0.124,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
-            link(5) = Link('d',0.110,'a',0,'alpha',-pi/2,'qlim',deg2rad([-180,180]), 'offset',0);
-            link(6) = Link('d',0.1132,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', 0);
+            link(1) = Link('d',0.1652,'a',0,'alpha',pi/2,'qlim',deg2rad([-270, 270]), 'offset',0);
+            link(2) = Link('d',0,'a',-0.6361,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
+            link(3) = Link('d',0,'a',-0.5579,'alpha',0,'qlim', deg2rad([-155, 155]), 'offset', 0);
+            link(4) = Link('d',0.106,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
+            link(5) = Link('d',0.106,'a',0,'alpha',-pi/2,'qlim',deg2rad([-180,180]), 'offset',0);
+            link(6) = Link('d',0.11315,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', 0);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
-
-
     end
 end

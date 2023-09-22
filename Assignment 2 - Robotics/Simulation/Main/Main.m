@@ -8,6 +8,7 @@ addpath('../TM5Mobile');
 addpath('../TM5');
 addpath('../OmcronBaseClass');
 addpath('../UR5Modified/')
+%% 
 
 % Call the setup function:
 SetupEnvironment(eye(4));
