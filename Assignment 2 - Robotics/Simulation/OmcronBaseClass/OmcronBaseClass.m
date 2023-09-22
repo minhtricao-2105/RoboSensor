@@ -530,13 +530,13 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
-        function rmrc(self, startPose, endPose, qGuess, object)
+        function rmrc(self, startPose, endPose, qGuess, camera, object)
             
             % Check whenever we want to move the object with the robot:
             moveObject = true;
 
             % If there is no object input => No need to move the object
-            if nargin < 5
+            if nargin < 6
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
@@ -622,9 +622,14 @@ classdef OmcronBaseClass < handle
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
                 
+                % Get the endeffector pose:
+                eeTr = self.model.fkine(qMatrix(i+1,:)).T;
+
+                % Move the camera with the robot:
+                camera.moveCamera(eeTr);
+                
                 % Animate the movement of the object:
                 if moveObject
-                    eeTr = self.model.fkine(qMatrix(i+1,:)).T;
                     transform = eeTr*objectEE;
                     object.moveObject(transform);
                 end

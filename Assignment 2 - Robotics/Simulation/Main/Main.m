@@ -17,7 +17,7 @@ qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
 
 % Setup the robot:
 baseTr  = transl(0,0,0.8)*trotz(pi);
-baseTr2 = transl(4,0.25,1);
+baseTr2 = transl(4,0.25,0.90);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
 ttRobot = UR5Modified(baseTr2, qHome);
@@ -35,9 +35,9 @@ randX3 = -0.5 + (0.5+0.5)*rand();
 randY3 = -0.5 + (0.5+0.5)*rand();
 
 % Place products using the random offsets
-product1 = PlaceObjectModified('redProduct.ply', baseTr2*transl(0.5, randY1, -0.1));
-product2 = PlaceObjectModified('blueProduct.ply', baseTr2*transl(0.5, randY2, -0.1));
-product3 = PlaceObjectModified('greenProduct.ply', baseTr2*transl(0.5, randY3, -0.1));
+product1 = PlaceObjectModified('redProduct.ply', baseTr2*transl(0.5, 0, 0));
+product2 = PlaceObjectModified('blueProduct.ply', baseTr2*transl(0.5, 0.25, 0));
+product3 = PlaceObjectModified('greenProduct.ply', baseTr2*transl(0.5, -0.25, 0));
 
 % Make the ttRobot move to the position to pick up the product:
 for i = 1:50
