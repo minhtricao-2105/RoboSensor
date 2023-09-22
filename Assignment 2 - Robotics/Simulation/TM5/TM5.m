@@ -51,5 +51,19 @@ classdef TM5 < OmcronBaseClass
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
 
+        %% Add suction cup model
+        function SuctionCup(self)
+            hold on;
+            mesh_h = PlaceObject('suction_cup.ply');
+            axis equal
+            vertices = get(mesh_h,'Vertices');
+            
+            tr = self.model.base.T * transl(-0.6,-0.2,0.02);
+            transformedVertices = [vertices,ones(size(vertices,1),1)] * tr';
+            set(mesh_h,'Vertices',transformedVertices(:,1:3));
+            drawnow();
+        end
+
+
     end
 end
