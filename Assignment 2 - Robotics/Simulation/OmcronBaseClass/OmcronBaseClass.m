@@ -23,6 +23,8 @@ classdef OmcronBaseClass < handle
         % The constraint variable of the robot platform:
         linkEllipsoid = struct('center', {{}}, 'radii', {{}}, 'A', {{}}, 'X', {{}}, 'Y', {{}}, 'Z', {{}});
 
+        robotState = 'normal'; %'normal', 'stop', 'holding'
+
     end
 
     properties (Hidden)
@@ -634,10 +636,37 @@ classdef OmcronBaseClass < handle
                     object.moveObject(transform);
                 end
 
+                if (strcmp(self.robotState, 'stop')|| strcmp(self.robotState, 'holding'))
+                    i = i - 1;
+                    disp("EMERGENCY STOP!");
+                elseif (strcmp(self.robotState, 'normal'))
+                    i = i;
+                end
+
                 pause(0.05)
 
             end
         end
+
+        %% Enable E-Stop    (call back function from GUI)
+        function EnableEStop(self)
+            self.robotState = 'stop';
+        end
+
+        %% Diengaging e-stop    (call back function from GUI)
+        function DiengagingEStop(self)
+            if (strcmp(self.robotState, 'stop'))
+                self.robotState = 'holding';
+            end
+        end
+
+        %% Resuming robot action    (call back function from GUI)
+        function ResumingRobot(self)
+            if (strcmp(self.robotState, 'holding'))
+                self.robotState = 'normal';
+            end
+        end
+        
 
     end
 end

@@ -23,6 +23,8 @@ classdef OmcronBaseClass < handle
         % The constraint variable of the robot platform:
         linkEllipsoid = struct('center', {{}}, 'radii', {{}}, 'A', {{}}, 'X', {{}}, 'Y', {{}}, 'Z', {{}});
 
+        robotState = 'normal'; %'normal', 'stop', 'holding'
+
     end
 
     properties (Hidden)
@@ -530,9 +532,20 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
-        function rmrc(self, startPose, endPose, qGuess, object)
+        function rmrc(self, startPose, endPose, qGuess, camera, object)
             
-            % Check 
+            % Check whenever we want to move the object with the robot:
+            moveObject = true;
+
+            % If there is no object input => No need to move the object
+            if nargin < 6
+                moveObject = false;
+            else
+                % Get the transformation between the EE and the object
+                eeTr = self.model.fkine(self.model.getpos).T;
+                objectEE = inv(eeTr)*object.baseTr;
+            end
+
             % Set up the initial parameters:
             t = 2;                              % Total Time of motion
             steps = 50;                         % Number of steps
@@ -610,10 +623,50 @@ classdef OmcronBaseClass < handle
 
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
+                
+                % Get the endeffector pose:
+                eeTr = self.model.fkine(qMatrix(i+1,:)).T;
+
+                % Move the camera with the robot:
+                camera.moveCamera(eeTr);
+                
+                % Animate the movement of the object:
+                if moveObject
+                    transform = eeTr*objectEE;
+                    object.moveObject(transform);
+                end
+
+                if (strcmp(self.robotState, 'stop')|| strcmp(self.robotState, 'holding'))
+                    i = i - 1;
+                    disp("EMERGENCY STOP!");
+                elseif (strcmp(self.robotState, 'normal'))
+                    i = i;
+                end
+
                 pause(0.05)
 
             end
         end
+
+        %% Enable E-Stop    (call back function from GUI)
+        function EnableEStop(self)
+            self.robotState = 'stop';
+        end
+
+        %% Diengaging e-stop    (call back function from GUI)
+        function DiengagingEStop(self)
+            if (strcmp(self.robotState, 'stop'))
+                self.robotState = 'holding';
+            end
+        end
+
+        %% Resuming robot action    (call back function from GUI)
+        function ResumingRobot(self)
+            if (strcmp(self.robotState, 'holding'))
+                self.robotState = 'normal';
+            end
+        end
+        
 
     end
 end
