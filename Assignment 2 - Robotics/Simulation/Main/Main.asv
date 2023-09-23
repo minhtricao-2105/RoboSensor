@@ -9,7 +9,6 @@ addpath('../TM5');
 addpath('../OmcronBaseClass');
 addpath('../UR5Modified/')
 addpath('../TM12/')
-addpath('../Camera')
 %% 
 
 % Call the setup function:
@@ -24,9 +23,6 @@ baseTr2 = transl(4,0.25,0.90);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
 ttRobot = TM12(baseTr2, qHome);
-cam = CameraBaseClass(ttRobot.model.fkine(ttRobot.model.getpos).T);
-cam.camera_h.ishold
-
 hold on
 
 % Set up the product:
@@ -51,12 +47,4 @@ for i = 1:50
     pause(0.05);
 end
 
-startPose = ttRobot.model.fkine(ttRobot.model.getpos()).T;
-endPose = baseTr2*transl(0.5, 0, 0);
-qGuess = ttRobot.model.getpos();
-ttRobot.rmrc(startPose, endPose, qGuess,cam);
 
-startPose = ttRobot.model.fkine(ttRobot.model.getpos()).T;
-endPose = baseTr2*transl(0.5, 0, 0.3);
-qGuess = ttRobot.model.getpos();
-ttRobot.rmrc(startPose, endPose, qGuess,cam, product1);

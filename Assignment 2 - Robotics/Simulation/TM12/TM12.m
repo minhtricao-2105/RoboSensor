@@ -27,7 +27,7 @@ classdef TM12 < OmcronBaseClass
             end
 
             if nargin < 3
-                workplaceInput =  [-1.2, 1.2, -1.2, 1.2, 0, 1.2]; % Default workplace input if not provided
+                workplaceInput =  [-1.5, 1.5, -1.5, 1.5, 0, 1.2]; % Default workplace input if not provided
             end
 
             % Setup the home position of the robot:
@@ -49,9 +49,9 @@ classdef TM12 < OmcronBaseClass
             link(1) = Link('d',0.1652,'a',0,'alpha',pi/2,'qlim',deg2rad([-270, 270]), 'offset',0);
             link(2) = Link('d',0,'a',-0.6361,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
             link(3) = Link('d',0,'a',-0.5579,'alpha',0,'qlim', deg2rad([-155, 155]), 'offset', 0);
-            link(4) = Link('d',0.106,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
+            link(4) = Link('d',0.13,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
             link(5) = Link('d',0.106,'a',0,'alpha',-pi/2,'qlim',deg2rad([-180,180]), 'offset',0);
-            link(6) = Link('d',0.11315,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', 0);
+            link(6) = Link('d',0.11315,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', pi);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
