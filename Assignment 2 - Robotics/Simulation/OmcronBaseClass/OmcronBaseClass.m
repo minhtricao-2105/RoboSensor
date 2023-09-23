@@ -22,7 +22,8 @@ classdef OmcronBaseClass < handle
 
         % The constraint variable of the robot platform:
         linkEllipsoid = struct('center', {{}}, 'radii', {{}}, 'A', {{}}, 'X', {{}}, 'Y', {{}}, 'Z', {{}});
-
+        
+        % Setup the State of the robot:
         robotState = 'normal'; %'normal', 'stop', 'holding'
 
     end
