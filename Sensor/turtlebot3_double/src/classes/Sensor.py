@@ -1,6 +1,7 @@
 # Import
 import rospy
 import cv2 
+print(cv2.getBuildInformation())
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
 
