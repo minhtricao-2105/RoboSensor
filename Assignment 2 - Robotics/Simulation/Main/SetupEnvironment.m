@@ -7,7 +7,7 @@ close all;
 addpath('../Environment');
 
 %% -- Setup the environment:
-axis([-3 3.25 -3 2.5 0 3]);
+axis([-3 3.25 -4 2.5 0 3]);
 hold on
 PlaceObjectModified('workspace.ply', baseTr);
 

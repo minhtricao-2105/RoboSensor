@@ -24,12 +24,10 @@ qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
 baseTr  = transl(0,0,0.8)*trotz(pi);
 baseTr2 = transl(2,0.25,0.90);
 baseTr3 = transl(2,1.25,0.90);
-baseTr4 = transl(1.5,-3.6,0) * trotz(-pi/2);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
 ttRobot = TM12(baseTr2, qHome);
 ttArm = Arm(baseTr3);
-ttHuman = Human(baseTr4);
 cam = CameraBaseClass(ttRobot.model.fkine(ttRobot.model.getpos).T);
 cam.camera_h.ishold
 

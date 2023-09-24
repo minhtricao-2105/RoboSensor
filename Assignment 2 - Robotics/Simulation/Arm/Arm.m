@@ -1,5 +1,5 @@
 classdef Arm < OmcronBaseClass
-    %% Arm model
+    %% UR5 Universal Robot 5kg payload robot model
     %
     % WARNING: This model has been created by UTS students in the subject
     % 41013. No guarentee is made about the accuracy or correctness of the
@@ -27,7 +27,7 @@ classdef Arm < OmcronBaseClass
             end
 
             if nargin < 3
-                workplaceInput =  [-1.5, 1.5, -1.5, 1.5, 0, 1.2]; % Default workplace input if not provided
+                workplaceInput =  [-1.2, 1.2, -1.2, 1.2, 0, 1.2]; % Default workplace input if not provided
             end
 
             % Setup the home position of the robot:
@@ -46,8 +46,7 @@ classdef Arm < OmcronBaseClass
 
         %% CreateModel
         function CreateModel(self)
-            link(1) = Link('d',0,'a',0.1652,'alpha',0,'qlim',deg2rad([-360, 360]), 'offset',0);
-            % link(2) = Link('d',0.1652,'a',0,'alpha',0,'qlim',deg2rad([-360, 360]), 'offset',0);
+            link(1) = Link('d',0,    'a',0.6,      'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end

@@ -37,7 +37,7 @@ classdef Human < OmcronBaseClass
             self.workspace = workplaceInput;
 
             % The base of the TM5 robot is based on the base input
-            self.baseTransform = self.baseTransform * baseTr;
+            self.baseTransform = self.baseTransform * baseTr * trotx(pi/2) * troty(pi/2);
 
             % Plot the UR3 model on simulation environment
             self.CreateModel();
@@ -47,9 +47,9 @@ classdef Human < OmcronBaseClass
         %% CreateModel
         function CreateModel(self)
             link(1) = Link([pi     0       0       pi/2    1]); % PRISMATIC Link
-            % link(2) = Link('d',0,'a',-0.6361,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
+            link(2) = Link('d',1.2,'a',-0.3,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',pi/2);
 
-            link(1).qlim = [0 0.8];
+            link(1).qlim = [-0.8 -0.01];
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
     end
