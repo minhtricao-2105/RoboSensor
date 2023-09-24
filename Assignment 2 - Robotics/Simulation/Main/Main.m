@@ -10,6 +10,7 @@ addpath('../OmcronBaseClass');
 addpath('../UR5Modified/')
 addpath('../TM12/')
 addpath('../Camera')
+addpath('../Arm/')
 %% 
 
 % Call the setup function:
