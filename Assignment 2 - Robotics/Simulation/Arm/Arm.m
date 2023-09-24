@@ -47,7 +47,7 @@ classdef Arm < OmcronBaseClass
         %% CreateModel
         function CreateModel(self)
             link(1) = Link('d',0.1652,'a',0,'alpha',pi/2,'qlim',deg2rad([-360, 360]), 'offset',0);
-            
+            % link(2) = Link('d',0.1652,'a',0,'alpha',0,'qlim',deg2rad([-360, 360]), 'offset',0);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
