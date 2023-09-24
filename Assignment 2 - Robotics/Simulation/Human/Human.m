@@ -1,5 +1,5 @@
-classdef Arm < OmcronBaseClass
-    %% Arm model
+classdef Human < OmcronBaseClass
+    %% TM12 Omron Robot 12kg payload robot model
     %
     % WARNING: This model has been created by UTS students in the subject
     % 41013. No guarentee is made about the accuracy or correctness of the
@@ -7,14 +7,14 @@ classdef Arm < OmcronBaseClass
     % that this matches the real robot!
 
     properties(Access = public)
-        plyFileNameStem = 'Arm';
+        plyFileNameStem = 'Human';
     end
 
 
     methods
         %% Constructor
-        function self = Arm(baseTr, qHome, workplaceInput)
-            % Create the model of the TM5 robot
+        function self = Human(baseTr, qHome, workplaceInput)
+            % Create the model of the TM12 robot
             self.CreateModel();
 
             % if there is no special input for base, default value will be applied (=4x4 identity matrix)
@@ -23,7 +23,7 @@ classdef Arm < OmcronBaseClass
             end
 
             if nargin < 2
-                qHome = [0];  % Default the homing position of the robot if not provided
+                qHome = [0, 0];  % Default the homing position of the robot if not provided
             end
 
             if nargin < 3
@@ -46,9 +46,10 @@ classdef Arm < OmcronBaseClass
 
         %% CreateModel
         function CreateModel(self)
-            link(1) = Link('d',0,'a',0.1652,'alpha',0,'qlim',deg2rad([-360, 360]), 'offset',0);
-            % link(2) = Link('d',0.1652,'a',0,'alpha',0,'qlim',deg2rad([-360, 360]), 'offset',0);
+            link(1) = Link([pi     0       0       pi/2    1]); % PRISMATIC Link
+            % link(2) = Link('d',0,'a',-0.6361,'alpha',0,'qlim', deg2rad([-180, 180]), 'offset',0);
 
+            link(1).qlim = [0 0.8];
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
     end

@@ -11,6 +11,7 @@ addpath('../UR5Modified/')
 addpath('../TM12/')
 addpath('../Camera')
 addpath('../Arm/')
+addpath('../Human/')
 %% 
 
 % Call the setup function:
