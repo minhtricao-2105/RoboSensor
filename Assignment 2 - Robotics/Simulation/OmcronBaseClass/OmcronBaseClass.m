@@ -637,7 +637,7 @@ classdef OmcronBaseClass < handle
                     object.moveObject(transform);
                 end
 
-                if (strcmp(self.robotState, 'stop')|| strcmp(self.robotState, 'holding'))
+                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
                     i = i - 1;
                     disp("EMERGENCY STOP!");
                 elseif (strcmp(self.robotState, 'normal'))
@@ -646,7 +646,7 @@ classdef OmcronBaseClass < handle
 
                 pause(0.05)
 
-            end
+            end 
         end
 
         %% Enable E-Stop    (call back function from GUI)

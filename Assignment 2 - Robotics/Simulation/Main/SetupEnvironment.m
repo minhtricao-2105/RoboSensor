@@ -7,7 +7,7 @@ close all;
 addpath('../Environment');
 
 %% -- Setup the environment:
-axis([-5 5 -5 5 0 4]);
+axis([-3 3.25 -3 2.5 0 3]);
 hold on
 PlaceObjectModified('workspace.ply', baseTr);
 
@@ -17,14 +17,9 @@ PlaceObjectModified('workspace.ply', baseTr);
 yLeft = [4, 2.5, 1, -0.5];
 
 for y = yLeft
-    PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(pi/2) * transl(-4, y, 0));
+    PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(pi/2) * transl(-2, y, 0));
 end
 
-% Vegetable Rack Stand on the right:
-yRight = [-4, -2.5, -1, 0.5];
 
-for y = yRight
-    PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(-pi/2) * transl(-4, y, 0));
-end
 
 end
