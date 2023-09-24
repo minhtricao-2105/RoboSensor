@@ -640,18 +640,16 @@ classdef OmcronBaseClass < handle
                 
                 % Check stop 
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
-                    i = i;
+                    i = i ;
                     disp("EMERGENCY STOP!");
-                else
-                    i = i + 1;
                 end
                 
                 % Check avoid collision
-                % if (i == 40)
-                %     i = i
-                % else
-                %     i=i+1;
-                % end
+                if (i == 40)
+                    i = i
+                else
+                    i=i+1;
+                end
                 pause(0.05)
 
             end 
