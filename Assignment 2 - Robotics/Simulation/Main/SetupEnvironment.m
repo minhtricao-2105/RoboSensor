@@ -7,18 +7,26 @@ close all;
 addpath('../Environment');
 
 %% -- Setup the environment:
-axis([-3 3.25 -4 2.5 0 3]);
+axis([-3 3.25 -4 2.5 -0.1 3]);
 hold on
 PlaceObjectModified('workspace.ply', baseTr);
 
+%% -- Setup the background of the base:
+hold on;
+surf([-4, -4; 4, 4] ...
+,[-4, 4; -4, 4] ...
+,[-0.1,-0.1;-0.1,-0.1] ...
+,'CData',imread('concrete.jpg') ...
+,'FaceColor','texturemap');
+
 %% -- Setup the vegetable crack:
 
-% Vegetable Rack Stand on the left:
-yLeft = [4, 2.5, 1, -0.5];
-
-for y = yLeft
-    PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(pi/2) * transl(-2, y, 0));
-end
+% % Vegetable Rack Stand on the left:
+% yLeft = [4, 2.5, 1, -0.5];
+% 
+% for y = yLeft
+%     PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(pi/2) * transl(-2, y, 0));
+% end
 
 for i=1:10
     PlaceObjectModified('laserLight.ply', baseTr * transl(1, -2.9, i*0.2));
