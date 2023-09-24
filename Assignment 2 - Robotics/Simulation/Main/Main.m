@@ -20,7 +20,7 @@ qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
 
 % Setup the robot:
 baseTr  = transl(0,0,0.8)*trotz(pi);
-baseTr2 = transl(4,0.25,0.90);
+baseTr2 = transl(2,0.25,0.90);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
 ttRobot = TM12(baseTr2, qHome);
