@@ -35,10 +35,13 @@ classdef Mission < handle
             % Move up a little bit
             startPose = robot.model.fkine(robot.model.getpos()).T;
             endPoseTemp = startPose * transl(0,0,-0.5);
+            startPose = startPose(1:3,4)';
+            endPoseTemp = endPoseTemp(1:3,4)';
             robot.rmrc(startPose, endPoseTemp, robot.model.getpos(), 2, 50, human, arm, self.mainAppHandle);
             
             % Move to disired pose after moving up
             startPose = robot.model.fkine(robot.model.getpos()).T;
+            startPose = startPose(1:3,4)';
             robot.rmrc(startPose, endPose, robot.model.getpos(), 2, 50, human, arm, self.mainAppHandle);
         end
         
