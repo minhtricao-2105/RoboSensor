@@ -552,8 +552,8 @@ classdef OmcronBaseClass < handle
             end
 
             % Set up the initial parameters:
-            t = 0.8;                              % Total Time of motion
-            steps = 2;                         % Number of steps
+            t = 0.8; %2                             % Total Time of motion
+            steps = 2; %50                        % Number of steps
             deltaT = t/steps;                   % Small Angle Change
             threshold = 0.2;                    % Threshhold value for manipulability
             waypoints = zeros(steps,3);              % Waypoints matrix
@@ -562,8 +562,10 @@ classdef OmcronBaseClass < handle
             qMatrix = zeros(steps, self.model.n);      % Array for joint Angels:
 
             % Set up trajectory:
-            startPoint = startPose(1:3,4)';
-            endPoint = endPose(1:3,4)';
+            % startPoint = startPose(1:3,4)';
+            % endPoint = endPose(1:3,4)';
+            startPoint = startPose;
+            endPoint = endPose;
 
             for i = 1:steps
                 t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
@@ -571,7 +573,8 @@ classdef OmcronBaseClass < handle
             end
 
             % Solve joint angles to achieve first waypoint:
-            qMatrix(1,:) = self.model.ikcon(startPose, qGuess);
+            % qMatrix(1,:) = self.model.ikcon(startPose, qGuess);
+            qMatrix(1,:) = self.model.getpos;
 
             % Animate the first q
             self.model.animate(qMatrix(1,:));
@@ -649,7 +652,7 @@ classdef OmcronBaseClass < handle
 
                     % Turn on the Switch Button
                     app.EStopSwitch.Enable = "on";
-                    
+
                 else
                     i = i + 1;
                 end
@@ -723,7 +726,7 @@ classdef OmcronBaseClass < handle
 
             % Get end point of obstacle model
             currentQ = obstacleObject.model.getpos();
-            currentPose = humanObject.model.fkine(currentQ).T;
+            currentPose =  obstacleObject.model.fkine(currentQ).T;
             endPoint = currentPose(1:3,4)';
 
             % Get end of effector of the robot
