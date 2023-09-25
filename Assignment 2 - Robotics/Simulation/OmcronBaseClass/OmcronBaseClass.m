@@ -665,7 +665,6 @@ classdef OmcronBaseClass < handle
                 app.UpdateEndEffectorData();
 
 
-
                 pause(0.05)
 
             end 
