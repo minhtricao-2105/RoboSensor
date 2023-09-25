@@ -555,8 +555,8 @@ classdef OmcronBaseClass < handle
             end
 
             % Set up the initial parameters:
-            t = 2;                              % Total Time of motion
-            steps = 50;                         % Number of steps
+            t = 0.8;                              % Total Time of motion
+            steps = 2;                         % Number of steps
             deltaT = t/steps;                   % Small Angle Change
             threshold = 0.2;                    % Threshhold value for manipulability
             waypoints = zeros(steps,3);              % Waypoints matrix
@@ -664,8 +664,6 @@ classdef OmcronBaseClass < handle
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
 
-                
-
                 pause(0.05)
 
             end 
@@ -708,6 +706,7 @@ classdef OmcronBaseClass < handle
 
             if check == 1
                 checkCollision = true;
+                self.robotState = 'stop';
             else
                 checkCollision = false;
             end
