@@ -536,7 +536,7 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
-        function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, object, app)
+        function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, app, object)
 
             % Check whenever we want to move the object with the robot:
             moveObject = true;
@@ -545,17 +545,12 @@ classdef OmcronBaseClass < handle
             updateGui = true;
 
             % If there is no object input => No need to move the object
-            if nargin < 7
+            if nargin < 8
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
                 eeTr = self.model.fkine(self.model.getpos).T;
                 objectEE = inv(eeTr)*object.baseTr;
-            end
-
-            % Check if we need to interact with the gui or not:
-            if nargin < 8
-                updateGui = false;
             end
 
             % Set up the initial parameters:
@@ -665,10 +660,9 @@ classdef OmcronBaseClass < handle
                 end
                 
                 % Update the data of the robot to the gui:
-                if updateGui == true
-                    app.UpdateJointStateData();
-                    app.UpdateEndEffectorData();
-                end
+                app.UpdateJointStateData();
+                app.UpdateEndEffectorData();
+
 
                 pause(0.05)
 
