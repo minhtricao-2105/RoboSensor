@@ -12,12 +12,12 @@ classdef Mission < handle
         end
 
         %% Move Robot Function:
-        function moveTM12ToPosition(self, robot, position, human)
+        function main(self, tm5Robot, tm12Robot, human, arm)
             
-            robot.rmrc(robot.model.fkine(robot.model.getpos).T, position, robot.model.getpos, human)
+            startPose = tm12Robot.model.fkine(tm12Robot.model.getpos()).T;
+            endPose = startPose*transl(0.5, 0, 0);
+            ttRobot.rmrc(startPose, endPose, tm12Robot.model.getpos(), human);
 
-            % Update app position:
-            self.mainAppHandle.UpdateJointStateData();
         end
     end
 end
