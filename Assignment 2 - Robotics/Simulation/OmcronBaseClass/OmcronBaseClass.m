@@ -542,9 +542,6 @@ classdef OmcronBaseClass < handle
             % Check whenever we want to move the object with the robot:
             moveObject = true;
             
-            % Check whenever we want to interact with the gui:
-            updateGui = true;
-
             % If there is no object input => No need to move the object
             if nargin < 8
                 moveObject = false;
@@ -649,6 +646,10 @@ classdef OmcronBaseClass < handle
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
                     i = i;
                     disp("EMERGENCY STOP!");
+
+                    % Turn on the Switch Button
+                    app.EStopSwitch.Enable = "on";
+                    
                 else
                     i = i + 1;
                 end
