@@ -32,7 +32,7 @@ baseTr3 = transl(2,1.25,0.90);
 baseTr4 = transl(1.5,-3.6,0) * trotz(-pi/2);
 
 ttRobotTM5Mobile = TM5Mobile(baseTr, qHome);
-ttRobot = TM12(baseTr2, qHome);
+ttRobotTM12 = TM12(baseTr2, qHome);
 ttArm = Arm(baseTr3);
 ttHuman = Human(baseTr4);
 
@@ -72,30 +72,33 @@ product3 = PlaceObjectModified('greenProduct.ply', baseTr2*transl(0.5, -0.25, 0)
 
 % Generate path
 tm12EndPose = baseTr2*transl(0.5, 0, 0);
-qGuess = ttRobot.model.getpos();
+waypoints = GeneratePath(ttRobotTM12, tm12EndPose);
 
-waypoints = GeneratePath(ttRobot, tm12EndPose);
-waypointsTM5;
+tm5EndPose = baseTr*transl(0.5, 0, 0.1);
+waypointsTM5 = GeneratePath(ttRobotTM5Mobile, tm5EndPose);
+
 for i=1:50-1
-    startPose = waypoints(i, :);
-    endPose = waypoints(i+1, :);
+    startPoseTM12 = waypoints(i, :);
+    endPoseTM12 = waypoints(i+1, :);
 
-    tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), human);
-    % if (tm12Robot.obstacleAvoidance == true)
-    %     % Move up a little bit
-    %     startPose = tm12Robot.model.fkine(tm12Robot.model.getpos()).T;
-    %     endPoseTemp = startPose * transl(0,0,-0.5);
-    %     tm12Robot.rmrc(startPose, endPoseTemp, tm12Robot.model.getpos(), human);
-    % 
-    %     % Move to disired pose after moving up
-    %     startPose = tm12Robot.model.fkine(tm12Robot.model.getpos()).T;
-    %     tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), human);
-    % end
+    startPoseTM5 = waypointsTM5(i,:);
+    endPoseTM5 = waypointsTM5(i+1,:);
+
+    ttRobotTM12.rmrc(startPoseTM12, endPoseTM12, ttRobotTM12.model.getpos(),0.8,2, ttHuman, ttArm);
+    ttRobotTM5Mobile.rmrc(startPoseTM5, endPoseTM5, ttRobotTM5Mobile.model.getpos(),0.8,2, ttHuman, ttArm);
 end
+
+startPose = ttRobotTM12.model.fkine(ttRobotTM12.model.getpos()).T;
+startPose = startPose(1:3,4)';
+
+endPose = baseTr2*transl(0.5, 0, 0.3);
+endPose = endPose(1:3,4)';
+
+ttRobotTM12.rmrc(startPose, endPose, ttRobotTM12.model.getpos(), 2, 50, ttHuman, tt)
 
 %% Fucntion to generate path
 function waypointsT = GeneratePath(robot, endPose)
-    startPose = robot.model.fkine(tm12Robot.model.getpos()).T;
+    startPose = robot.model.fkine(robot.model.getpos()).T;
 
     startPoint = startPose(1:3,4)';
     endPoint = endPose(1:3,4)';

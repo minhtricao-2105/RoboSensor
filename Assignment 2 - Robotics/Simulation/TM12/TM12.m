@@ -51,7 +51,7 @@ classdef TM12 < OmcronBaseClass
             link(3) = Link('d',0,'a',-0.5579,'alpha',0,'qlim', deg2rad([-155, 155]), 'offset', 0);
             link(4) = Link('d',0.13,'a',0,'alpha',pi/2,'qlim',deg2rad([-180, 180]),'offset', 0);
             link(5) = Link('d',0.106,'a',0,'alpha',-pi/2,'qlim',deg2rad([-180,180]), 'offset',0);
-            link(6) = Link('d',0.11315,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', pi);
+            link(6) = Link('d',0.23,'a',0,'alpha',0,'qlim',deg2rad([-270, 270]), 'offset', pi);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end

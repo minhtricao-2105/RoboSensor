@@ -651,7 +651,7 @@ classdef OmcronBaseClass < handle
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
-                    app.EStopSwitch.Enable = "on";
+                    % app.EStopSwitch.Enable = "on";
 
                 else
                     i = i + 1;
@@ -665,8 +665,8 @@ classdef OmcronBaseClass < handle
                 end
                 
                 % Update the data of the robot to the gui:
-                app.UpdateJointStateData();
-                app.UpdateEndEffectorData();
+                % app.UpdateJointStateData();
+                % app.UpdateEndEffectorData();
 
                 pause(0.05)
 

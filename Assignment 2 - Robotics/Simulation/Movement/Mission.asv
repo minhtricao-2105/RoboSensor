@@ -21,8 +21,7 @@ classdef Mission < handle
                 endPose = waypoints(i+1, :);
                 tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), 0.8,2, human, arm, self.mainAppHandle);
                 if (tm12Robot.obstacleAvoidance == true)
-                    self.AvoidCollision(tm12Robot, endPose);
-                    break;
+                    self.AvoidCollision()
                 end
             end
             
