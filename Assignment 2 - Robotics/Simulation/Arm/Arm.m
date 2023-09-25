@@ -23,7 +23,7 @@ classdef Arm < OmcronBaseClass
             end
 
             if nargin < 2
-                qHome = [0];  % Default the homing position of the robot if not provided
+                qHome = [0 0];  % Default the homing position of the robot if not provided
             end
 
             if nargin < 3
@@ -47,6 +47,7 @@ classdef Arm < OmcronBaseClass
         %% CreateModel
         function CreateModel(self)
             link(1) = Link('d',0,    'a',0.6,      'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
+            link(2) = Link('d',0.2,    'a',0,      'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end

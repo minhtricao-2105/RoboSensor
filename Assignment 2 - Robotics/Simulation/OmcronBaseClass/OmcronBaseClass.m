@@ -26,6 +26,9 @@ classdef OmcronBaseClass < handle
         % Setup the State of the robot:
         robotState = 'normal'; %'normal', 'stop', 'holding'
 
+        % Check obstacle avoidance
+        obstacleAvoidance = false;
+
     end
 
     properties (Hidden)
@@ -177,7 +180,7 @@ classdef OmcronBaseClass < handle
                         [intersectP,check] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane,tr(1:3,4,i)',tr(1:3,4,i+1)');
                         if check == 1 && self.IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
                             plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
-                            display('[WARNING]: Collision Detection!');
+                            disp('[WARNING]: Collision Detection!');
                             collisionDetection = true;
                             if returnOnceFound
                                 return
@@ -533,13 +536,13 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
-        function rmrc(self, startPose, endPose, qGuess, humanObject, object)
+        function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, object)
             
             % Check whenever we want to move the object with the robot:
             moveObject = true;
 
             % If there is no object input => No need to move the object
-            if nargin < 6
+            if nargin < 7
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
@@ -645,6 +648,13 @@ classdef OmcronBaseClass < handle
                 else
                     i = i + 1;
                 end
+
+                % Check obstacle, then avoid collision
+                checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
+                if checkObstacle == true
+                    self.obstacleAvoidance = true;
+                    break;
+                end
                 
                 pause(0.05)
 
@@ -706,18 +716,24 @@ classdef OmcronBaseClass < handle
             currentPose = humanObject.model.fkine(currentQ).T;
             endPoint = currentPose(1:3,4)';
 
-            pointOnPlane = [1.5 -2.9 1];
+            % Get end of effector of the robot
+            eeRobot = self.model.fkine(self.model.getpos).T;
+            eeRobot = eeRobot(1:3,4)';
+
+            pointOnPlane = [2 0.75 1];
             planeNormal = [0 1 0];
 
             [intersectionPoint,check] = LinePlaneIntersection(planeNormal,pointOnPlane,startPoint,endPoint);
+            
+            distance = norm(intersectionPoint-eeRobot);
 
-            if check == 1
+            if ((check == 1) && (distance < 1))
                 checkObstacle = true;
             else
                 checkObstacle = false;
             end
         end
         
-
+        
     end
 end
