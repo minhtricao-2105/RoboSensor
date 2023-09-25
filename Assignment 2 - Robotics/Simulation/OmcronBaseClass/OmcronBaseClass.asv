@@ -536,8 +536,13 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
+<<<<<<< HEAD
         function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, object, app)
             
+=======
+        function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, object)
+
+>>>>>>> 004c82e17de5dc159f44451ef1903afe90bc988e
             % Check whenever we want to move the object with the robot:
             moveObject = true;
             
@@ -554,7 +559,11 @@ classdef OmcronBaseClass < handle
             end
 
             % Check if we need to interact with the gui or not:
+<<<<<<< HEAD
             if nargin < 8
+=======
+            if nargin < 7
+>>>>>>> 004c82e17de5dc159f44451ef1903afe90bc988e
                 updateGui = false;
             end
 
@@ -664,10 +673,19 @@ classdef OmcronBaseClass < handle
                     break;
                 end
                 
+<<<<<<< HEAD
                 % Update the data of the robot to the gui:
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
 
+=======
+<<<<<<< Updated upstream
+=======
+                % Update the data of the robot to the gui:
+                app.UpdateJointStateData();
+                app.UpdateEndEffectorData();
+                
+>>>>>>> 004c82e17de5dc159f44451ef1903afe90bc988e
                 pause(0.05)
 
             end 
