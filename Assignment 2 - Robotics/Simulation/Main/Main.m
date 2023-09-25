@@ -12,17 +12,21 @@ addpath('../TM12/')
 addpath('../Camera')
 addpath('../Arm/')
 addpath('../Human/')
-%% 
+
+% Setup the transform of the shelves in the environment:
+shelf1BaseTr = transl(-2,-2.55,0.1)*trotz(pi/2);
+shelf2BaseTr = transl(-1, -2.55,0.1)*trotz(pi/2);
+shelf3BaseTr = transl(0,-2.55,0.1)*trotz(pi/2);
 
 % Call the setup function:
-SetupEnvironment(eye(4));
+SetupEnvironment(eye(4), shelf1BaseTr, shelf2BaseTr, shelf3BaseTr);
 
 % Setup workspace:
 qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
 
 % Setup the robot:
-baseTr  = transl(0,0,0.8)*trotz(pi);
-baseTr2 = transl(2,0.25,0.90);
+baseTr  = transl(0,0,0.9)*trotz(pi);
+baseTr2 = transl(1.95,0.1,0.8);
 baseTr3 = transl(2,1.25,0.90);
 baseTr4 = transl(1.5,-3.6,0) * trotz(-pi/2);
 

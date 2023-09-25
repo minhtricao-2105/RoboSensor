@@ -1,4 +1,4 @@
-function SetupEnvironment(baseTr)
+function SetupEnvironment(baseTr, baseTr1, baseTr2, baseTr3)
 
 % First, let's close all the window:
 close all;
@@ -20,14 +20,11 @@ surf([-4, -4; 4, 4] ...
 ,'FaceColor','texturemap');
 
 %% -- Setup the vegetable crack:
+PlaceObjectModified('vegetable_crack1.ply', baseTr1);
+PlaceObjectModified('vegetable_crack2.ply', baseTr2);
+PlaceObjectModified('vegetable_crack3.ply', baseTr3);
 
-% % Vegetable Rack Stand on the left:
-% yLeft = [4, 2.5, 1, -0.5];
-% 
-% for y = yLeft
-%     PlaceObjectModified('vegetable_crack1.ply', baseTr * trotz(pi/2) * transl(-2, y, 0));
-% end
-
+%% -- Setup the light sensor:
 for i=1:10
     PlaceObjectModified('laserLight.ply', baseTr * transl(1, -2.9, i*0.2));
 end
