@@ -15,14 +15,26 @@ classdef Mission < handle
         function main(self, tm5Robot, tm12Robot, human, arm)
             
             % This is 1 path
+            currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
+            tm12EndPose = currentPose*transl(-0.3, 0, 0.2);
+            % waypoints = self.GeneratePath(tm12Robot, tm12EndPose);
+            % steps = 50;
+            % for i=1:steps-1
+            %     startPose = waypoints(i, :);
+            %     endPose = waypoints(i+1, :);
+            %     tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), 0.8,2, human, arm, self.mainAppHandle);
+            %     if (tm12Robot.obstacleAvoidance == true)
+            %         self.AvoidCollision(tm12Robot, waypoints(steps,:));
+            %         break;
+            %     end
+            % end
 
-            for i=1:steps-1
-                startPose = waypoints(i, :);
-                endPose = waypoints(i+1, :);
-                tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), 0.8,2, human, arm, self.mainAppHandle);
-                if (tm12Robot.obstacleAvoidance == true)
-                    self.AvoidCollision()
-                end
+            currentPoint = currentPose(1:3,4)';
+            endPoint = tm12EndPose(1:3,4)';
+
+            tm12Robot.rmrc(currentPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            if (tm12Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm12Robot, waypoints(steps,:));
             end
             
             
@@ -30,14 +42,17 @@ classdef Mission < handle
         end
 
         %% Fucntion to avoid collision
-        function AvoidCollision(self,robot, endPose)
+        function AvoidCollision(self, robot, endPose)
             % Move up a little bit
             startPose = robot.model.fkine(robot.model.getpos()).T;
             endPoseTemp = startPose * transl(0,0,-0.5);
+            startPose = startPose(1:3,4)';
+            endPoseTemp = endPoseTemp(1:3,4)';
             robot.rmrc(startPose, endPoseTemp, robot.model.getpos(), 2, 50, human, arm, self.mainAppHandle);
             
             % Move to disired pose after moving up
             startPose = robot.model.fkine(robot.model.getpos()).T;
+            startPose = startPose(1:3,4)';
             robot.rmrc(startPose, endPose, robot.model.getpos(), 2, 50, human, arm, self.mainAppHandle);
         end
         
@@ -58,7 +73,7 @@ classdef Mission < handle
 
         %% Fucntion to generate path
         function waypointsT = GeneratePath(self, robot, endPose)
-            startPose = robot.model.fkine(tm12Robot.model.getpos()).T;
+            startPose = robot.model.fkine(robot.model.getpos).T;
             startPoint = startPose(1:3,4)';
             endPoint = endPose(1:3,4)';
             steps = 50;
