@@ -22,7 +22,7 @@ qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
 
 % Setup the robot:
 baseTr  = transl(0,0,0.8)*trotz(pi);
-baseTr2 = transl(2,0.25,0.90);
+baseTr2 = transl(1.95,0.1,0.8);
 baseTr3 = transl(2,1.25,0.90);
 baseTr4 = transl(1.5,-3.6,0) * trotz(-pi/2);
 
