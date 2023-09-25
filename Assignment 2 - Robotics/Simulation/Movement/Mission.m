@@ -15,7 +15,9 @@ classdef Mission < handle
         function main(self, tm5Robot, tm12Robot, human, arm)
             
             % This is 1 path
-
+            tm12EndPose = baseTr2*transl(0.5, 0, 0);
+            waypoints = GeneratePath(tm12Robot, tm12EndPose);
+            
             for i=1:steps-1
                 startPose = waypoints(i, :);
                 endPose = waypoints(i+1, :);
