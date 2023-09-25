@@ -664,6 +664,7 @@ classdef OmcronBaseClass < handle
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
 
+                
 
                 pause(0.05)
 
