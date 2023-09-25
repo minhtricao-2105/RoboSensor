@@ -70,3 +70,43 @@ product3 = PlaceObjectModified('greenProduct.ply', baseTr2*transl(0.5, -0.25, 0)
 % qGuess = ttRobot.model.getpos();
 % ttRobot.rmrc(startPose, endPose, qGuess,ttHuman, product1);
 
+% Generate path
+tm12EndPose = baseTr2*transl(0.5, 0, 0);
+qGuess = ttRobot.model.getpos();
+
+waypoints = GeneratePath(ttRobot, tm12EndPose);
+waypointsTM5;
+for i=1:50-1
+    startPose = waypoints(i, :);
+    endPose = waypoints(i+1, :);
+
+    tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), human);
+    % if (tm12Robot.obstacleAvoidance == true)
+    %     % Move up a little bit
+    %     startPose = tm12Robot.model.fkine(tm12Robot.model.getpos()).T;
+    %     endPoseTemp = startPose * transl(0,0,-0.5);
+    %     tm12Robot.rmrc(startPose, endPoseTemp, tm12Robot.model.getpos(), human);
+    % 
+    %     % Move to disired pose after moving up
+    %     startPose = tm12Robot.model.fkine(tm12Robot.model.getpos()).T;
+    %     tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), human);
+    % end
+end
+
+%% Fucntion to generate path
+function waypointsT = GeneratePath(robot, endPose)
+    startPose = robot.model.fkine(tm12Robot.model.getpos()).T;
+
+    startPoint = startPose(1:3,4)';
+    endPoint = endPose(1:3,4)';
+    steps = 50;
+    waypoints = zeros(steps,3);
+    % Generate path
+    for i = 1:steps
+        t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
+        waypoints(i, :) = (1 - t) * startPoint + t * endPoint;
+    end
+
+    waypointsT = waypoints;
+end
+
