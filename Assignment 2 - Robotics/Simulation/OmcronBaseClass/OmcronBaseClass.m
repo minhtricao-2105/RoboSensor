@@ -536,6 +536,7 @@ classdef OmcronBaseClass < handle
         % RMRC from the current position to the desired point in the
         % Cartesian plane.
 
+<<<<<<< Updated upstream
         function rmrc(self, startPose, endPose, qGuess, humanObject, obstacleObject, object)
 =======
         function rmrc(self, startPose, endPose, qGuess, humanObject, object, app)
