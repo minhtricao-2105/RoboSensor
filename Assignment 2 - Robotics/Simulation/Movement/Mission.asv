@@ -1,0 +1,14 @@
+classdef Mission < handle
+
+    properties
+        Property1
+    end
+
+    methods
+        
+        function moveTM12ToPosition(self, app, robot, position, human, object)
+            
+            robot.rmrc(robot.model.fkine(robot.model.getpos).T, )
+        end
+    end
+end
