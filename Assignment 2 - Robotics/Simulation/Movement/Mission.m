@@ -114,12 +114,12 @@ classdef Mission < handle
             % Generate path for both TM12 and TM5 to move on top of the product 2 and 1 (move without product)
             initalProduct2Pose = products{2}.baseTr;
             tm12EndPose = initalProduct2Pose;
-            tm12EndPose(3) = tm12EndPose(3) + 0.3;
+            tm12EndPose(3) = initalProduct2Pose(3,4) + 0.3;
             waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
             
             pickUpProductPose = products{1}.baseTr;
             tm5EndPose = pickUpProductPose;
-            tm5EndPose(3) = tm5EndPose(3) + 0.3;
+            tm5EndPose(3) = pickUpProductPose(3,4) + 0.3;
             waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
             
             % --- TM12 and TM5 move to on top of product 2 and product 1 (move without product)
@@ -135,10 +135,10 @@ classdef Mission < handle
             end
 
             % Generate path for both TM12 and TM5 to pick up product 2 and 1 (move without product)
-            tm12EndPose(3) = tm12EndPose(3) + 0.05;
+            tm12EndPose(3) = initalProduct2Pose(3,4) + 0.05;
             waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
 
-            tm5EndPose(3) = tm5EndPose(3) + 0.05;
+            tm5EndPose(3) = pickUpProductPose(3,4) + 0.1;
             waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
             
             % --- TM12 and TM5 move to pick up product 2 and product 1 (move without product)
@@ -154,10 +154,10 @@ classdef Mission < handle
             end
 
             % Generate path for both TM12 and TM5 move the product 2 and 1 up (move with product)
-            tm12EndPose(3) = tm12EndPose(3) + 0.3;
+            tm12EndPose(3) = initalProduct2Pose(3,4) + 0.3;
             waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
 
-            tm5EndPose(3) = tm5EndPose(3) + 0.3;
+            tm5EndPose(3) = pickUpProductPose(3,4) + 0.3;
             waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
 
             % --- TM12 and TM5 move product 2 and product 1 up (move with product)
@@ -190,12 +190,12 @@ classdef Mission < handle
             % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
             zProduct2 = initalProduct2Pose(3,4) + 0.3;
             desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, desiredDropOffTM12);
+            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
 
             baseTM5 = tm5Robot.model.base.T;
             zProduct1 = baseTM5(3,4) + 0.3;
             desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, desiredDropOffTM5);
+            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
             
             % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
             for i=1:49
@@ -212,12 +212,12 @@ classdef Mission < handle
             % --- TM12 and TM5 move product 2 and product 1 to drop off position (move with product)
             zProduct2 = initalProduct2Pose(3,4) + 0.05;
             desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, desiredDropOffTM12);
+            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
 
             baseTM5 = tm5Robot.model.base.T;
             zProduct1 = baseTM5(3,4) + 0.05;
             desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, desiredDropOffTM5);
+            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
             
             % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
             for i=1:49
@@ -234,12 +234,12 @@ classdef Mission < handle
             % --- TM12 and TM5 move product 2 and product 1 back to drop off position (move without product)
             zProduct2 = initalProduct2Pose(3,4) + 0.3;
             desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, desiredDropOffTM12);
+            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
 
             baseTM5 = tm5Robot.model.base.T;
             zProduct1 = baseTM5(3,4) + 0.3;
             desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, desiredDropOffTM5);
+            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
             
             % --- TM12 and TM5 move product 2 and product 1 back to above drop off position (move without product)
             for i=1:49
