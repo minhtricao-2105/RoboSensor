@@ -55,7 +55,7 @@ classdef Mission < handle
             currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
 
             currentTM12Point = currentTM12Pose(1:3,4)';
-            z = initalProductPose(3,4);
+            z = initalProductPose(3,4) + 0.05;
             desiredDropOff = [1.25, -0.5, z];
 
             % Use RMRC to place the product in desired position

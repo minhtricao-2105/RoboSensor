@@ -507,7 +507,7 @@ classdef OmcronBaseClass < handle
             
             % Animate the path:
             i=1;
-            while i < size(qMatrix)
+            while i < 50
                 self.model.animate(qMatrix(i,:));
                 eeTr = self.model.fkine(qMatrix(i,:)).T;
 
