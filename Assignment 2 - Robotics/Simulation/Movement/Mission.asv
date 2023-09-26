@@ -135,10 +135,10 @@ classdef Mission < handle
             end             
             
             % Generate path for both TM12 and TM5 to pick up product 2 and 1 (move without product)
-            tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.06;  % Fixed!
+            tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.1;  % Fixed!
             waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
 
-            tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.18; % Fixed!
+            tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.15; % Fixed!
             waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
             
             % --- TM12 and TM5 move to pick up product 2 and product 1 (move without product)
@@ -173,26 +173,20 @@ classdef Mission < handle
             end
 
             % --- Rotate the base pi for both TM12 and TM5 (move with product)
-
-            steps = 50;
-
-            currentQTM5 = tm5Robot.model.getpos();
-            newQTM5 = currentQTM5;           % Fixed!
-            newQTM5(1) = currentQTM5(1) + pi;
-            tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, products{1});
-            % pathTM5 = jtraj(currentQTM5, newQTM5, steps);
-            
-            currentQTM12 = tm12Robot.model.getpos();
-            newQTM12 = currentQTM12;         % Fixed!
-            newQTM12(1) = currentQTM12(1) + pi;
+            % steps = 50;
+            % currentQTM12 = tm12Robot.model.getpos();
+            % newQTM12(1) = currentQTM12(1) + pi;
             % pathTM12 = jtraj(currentQTM12, newQTM12, steps);
-            tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, products{2});
-
+            % 
+            % currentQTM5 = tm5Robot.model.getpos();
+            % newQTM5(1) = currentQTM5(1) + pi;
+            % pathTM5 = jtraj(currentQTM5, newQTM5, steps);
+            % 
             % for i=1:steps
             %     tm12Robot.AnimatePath(pathTM12(i,:), 1, human, arm, self.mainAppHandle, products{2});
             %     tm5Robot.AnimatePath(pathTM5(i,:), 1, human, arm, self.mainAppHandle, products{1});
             % end
-            
+
             % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
             zProduct2 = initalProduct2Pose(3,4) + 0.3;
             desiredDropOffTM12 = [1.25, -0.2, zProduct2];
