@@ -53,6 +53,7 @@ randY3 = -0.5 + (0.5+0.5)*rand();
 product1 = PlaceObjectModified('redProduct.ply', baseTr2*transl(0.5, 0, 0));
 product2 = PlaceObjectModified('blueProduct.ply', baseTr2*transl(0.5, 0.25, 0));
 product3 = PlaceObjectModified('greenProduct.ply', baseTr2*transl(0.5, -0.25, 0));
+%% 
 
 % Make the ttRobot move to the position to pick up the product:
 % for i = 1:50

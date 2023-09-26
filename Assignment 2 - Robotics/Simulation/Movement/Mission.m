@@ -12,34 +12,66 @@ classdef Mission < handle
         end
 
         %% Move Robot Function:
-        function main(self, tm5Robot, tm12Robot, human, arm)
-            
+        function main(self, tm5Robot, tm12Robot, human, arm, products)
+            %/////////////// Sample path for first product /////////////
+            % ///////////// Get on top of the product
+            % Define start point and end point and use it for RMRC
+            currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
+            initalProductPose = products{1}.baseTr;
+
+            currentTM12Point = currentTM12Pose(1:3,4)';
+            desiredTM12Point = initalProductPose(1:3,4)';
+            desiredTM12Point = desiredTM12Point(3) + 0.2; % adjust the height
+
+            % Use RMRC to move the TM12 to on top of the product
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+
+            % /////////// move to position to grasp product
+            currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
+
+            currentTM12Point = currentTM12Pose(1:3,4)';
+            desiredTM12Point = initalProductPose(1:3,4)';
+            desiredTM12Point = desiredTM12Point(3) + 0.05; % adjust the height
+
+            % Use RMRC to move the TM12 to the product
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+
+            % ////////// Move up with product
+            currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
+
+            currentTM12Point = currentTM12Pose(1:3,4)';
+            desiredTM12Point = initalProductPose(1:3,4)';
+            desiredTM12Point = desiredTM12Point(3) + 0.2; % adjust the height
+
+            % Use RMRC to move the TM12 with product upward
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products{1});
+
+            % ////////// Move the product to dropp off position
+            currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
+
+            currentTM12Point = currentTM12Pose(1:3,4)';
+            z = initalProductPose(3,4);
+            desiredTM12Point = [1.25, -0.5, z];
+
+            % Use RMRC to move the TM12 with product upward
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products{1});
+
+            %////////////////// End of sample path //////////////////
+
             % This is 1 path
-            currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
-            tm12EndPose = currentPose*transl(0.7, 0, 0);
-            % waypoints = self.GeneratePath(tm12Robot, tm12EndPose);
-            % steps = 50;
-            % for i=1:steps-1
-            %     startPose = waypoints(i, :);
-            %     endPose = waypoints(i+1, :);
-            %     tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos(), 0.8,2, human, arm, self.mainAppHandle);
-            %     if (tm12Robot.obstacleAvoidance == true)
-            %         self.AvoidCollision(tm12Robot, waypoints(steps,:));
-            %         break;
-            %     end
+            % currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;
+            % tm12EndPose = currentPose*transl(0.7, 0, 0);
+            % 
+            % currentPoint = currentPose(1:3,4)';
+            % endPoint = tm12EndPose(1:3,4)';
+            % 
+            % tm12Robot.rmrc(currentPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            % if (tm12Robot.obstacleAvoidance == true)
+            %     self.AvoidCollision(tm12Robot, endPoint, human, arm, self.mainAppHandle);
+            %     disp('Fixing');
             % end
-
-            currentPoint = currentPose(1:3,4)';
-            endPoint = tm12EndPose(1:3,4)';
-
-            tm12Robot.rmrc(currentPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
-            if (tm12Robot.obstacleAvoidance == true)
-                self.AvoidCollision(tm12Robot, endPoint, human, arm, self.mainAppHandle);
-                disp('Fixing');
-            end
-            
-            
             % end of path
+
         end
 
         %% Fucntion to avoid collision
