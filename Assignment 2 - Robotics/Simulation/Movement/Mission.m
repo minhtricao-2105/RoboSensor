@@ -11,8 +11,8 @@ classdef Mission < handle
             self.mainAppHandle = mainAppHandle;
         end
 
-        %% Move Robot Function:
-        function main(self, tm5Robot, tm12Robot, human, arm, products)
+        %% Move Robot Function Step 1: TM12 move first product
+        function MoveFirstProduct(self, tm5Robot, tm12Robot, human, arm, products)
             % -------------- Sample path for first product -----------
             % --- Get on top of the product
             % Define start point and end point and use it for RMRC
@@ -21,7 +21,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = initalProductPose(1:3,4)';
-            desiredTM12Point(3) = desiredTM12Point(3) + 0.2; % adjust the height
+            desiredTM12Point(3) = desiredTM12Point(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 to on top of the product
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
@@ -41,7 +41,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = initalProductPose(1:3,4)';
-            desiredTM12Point(3) = desiredTM12Point(3) + 0.2; % adjust the height
+            desiredTM12Point(3) = desiredTM12Point(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 with product upward
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products{1});
@@ -49,7 +49,7 @@ classdef Mission < handle
             % --- Rotate the base pi
             newQ = tm12Robot.model.getpos();
             newQ(1) = newQ(1) + pi;
-            tm12Robot.AnimatePath(newQ,human,arm,self.mainAppHandle,products{1});
+            tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{1});
 
             % --- Move the product to dropp off position
             currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
@@ -66,10 +66,10 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = desiredDropOff;
-            desiredTM12Point(3) = desiredDropOff(3) + 0.2; % adjust the height
+            desiredTM12Point(3) = desiredDropOff(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 to the product
-            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);    
 
             %-------------- End of sample path ----------
 
@@ -86,6 +86,12 @@ classdef Mission < handle
             %     disp('Fixing');
             % end
             % end of path
+
+        end
+
+        %% Function move robot step 2: 
+        function FirstMoveBackAndFirstPick(self, tm5Robot, tm12Robot, human, arm, products)
+             % -------------- Sample path for move back after first product and TM5 pick up -----------
 
         end
 

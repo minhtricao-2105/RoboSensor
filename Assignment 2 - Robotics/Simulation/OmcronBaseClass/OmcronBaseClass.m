@@ -483,7 +483,7 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, newQ, humanObject, obstacleObject, app, object)
+        function AnimatePath(self, newQ, steps, humanObject, obstacleObject, app, object)
 
             % Setup the initial parameter:
             moveObject = true;
@@ -501,13 +501,13 @@ classdef OmcronBaseClass < handle
             currentQ = self.model.getpos();
 
             % Create path to move from current pose to desired pose
-            qMatrix = jtraj(currentQ, newQ, 50);
+            qMatrix = jtraj(currentQ, newQ, steps);
 
             % Animate robot move simutaneously with the product
             
             % Animate the path:
             i=1;
-            while i < 50
+            while i < steps
                 self.model.animate(qMatrix(i,:));
                 eeTr = self.model.fkine(qMatrix(i,:)).T;
 

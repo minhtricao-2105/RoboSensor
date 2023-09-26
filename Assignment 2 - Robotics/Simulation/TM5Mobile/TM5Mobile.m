@@ -55,5 +55,16 @@ classdef TM5Mobile < OmcronBaseClass
 
             self.model = SerialLink(link,'name',self.name, 'base', self.baseTransform);
         end
+
+        %% Move base function
+        function MoveBase(self, x, y, yaw)
+            for i = 1:50
+                self.model.base = self.model.base.T*transl(-x/50, -y/50, 0)*trotz(deg2rad(yaw)/50);
+                self.model.animate(self.model.getpos);
+                pause(0.05);
+            end
+            
+        end
+
     end
 end
