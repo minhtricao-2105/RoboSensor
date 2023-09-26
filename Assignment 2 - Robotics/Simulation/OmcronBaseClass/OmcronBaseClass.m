@@ -489,7 +489,7 @@ classdef OmcronBaseClass < handle
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 6
+            if nargin < 7
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
