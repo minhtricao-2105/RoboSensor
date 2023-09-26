@@ -6,6 +6,12 @@ classdef TM5Mobile < OmcronBaseClass
 
         % Create a gripper object
         Gripper;
+
+        % Q home pick
+        qHomePick;
+        
+        % Q home place
+        qHomePlace;
     end
 
     methods
@@ -42,6 +48,10 @@ classdef TM5Mobile < OmcronBaseClass
 
             % % Create a griper
             % self.Gripper = gripper(self.baseTransform);
+            
+            self.qHomePlace = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
+
+            self.qHomePick = [pi, -pi/2, -pi/2, -pi/2, pi/2, 0];
         end
 
         %% Create Model Function:

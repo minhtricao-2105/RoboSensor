@@ -56,7 +56,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             z = initalProductPose(3,4) + 0.3;
-            desiredDropOff = [1.25, -0.5, z];
+            desiredDropOff = [1.25, 0, z];
 
             % Use RMRC to place the product in above dropp off position
             tm12Robot.rmrc(currentTM12Point, desiredDropOff, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products);
@@ -66,7 +66,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             z = initalProductPose(3,4) + 0.05;
-            desiredDropOff = [1.25, -0.5, z];
+            desiredDropOff = [1.25, 0, z];
 
             % Use RMRC to place the product in above dropp off position
             tm12Robot.rmrc(currentTM12Point, desiredDropOff, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products);
@@ -101,164 +101,171 @@ classdef Mission < handle
 
         %% Function move robot step 2: 
         function FirstMoveBackAndFirstPick(self, tm5Robot, tm12Robot, human, arm, products)
-
-            % -------------- Sample path for move back after first product and TM5 pick up -----------
-            % --- Rotate the base pi
-            newQ = tm12Robot.model.getpos();
-            newQ(1) = newQ(1) - pi;
-            tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle);
-            
-            % --- Move TM5 approach the table
-            tm5Robot.MoveBase(0.75,0,0);            %CheckOk <!
-
-            % Generate path for both TM12 and TM5 to move on top of the product 2 and 1 (move without product)
-            initalProduct2Pose = products{2}.baseTr;
-            tm12EndPose = initalProduct2Pose;
-            tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.3;       % Fixed!
-            waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
-            
-            pickUpProductPose = products{1}.baseTr;
-            tm5EndPose = pickUpProductPose;
-            tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.3;         % Fixed!
-            waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);        
-            
-            % --- TM12 and TM5 move to on top of product 2 and product 1 (move without product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
-            end             
-            
-            % Generate path for both TM12 and TM5 to pick up product 2 and 1 (move without product)
-            tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.06;  % Fixed!
-            waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
-
-            tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.18; % Fixed!
-            waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
-            
-            % --- TM12 and TM5 move to pick up product 2 and product 1 (move without product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+            for k=2:6
+                % -------------- Sample path for move back after first product and TM5 pick up -----------
+                % --- Rotate the base pi
+                newQ = tm12Robot.model.getpos();
+                newQ(1) = newQ(1) - pi;
+                tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle);
+                
+                % --- Move TM5 approach the table
+                if(k==2)
+                    tm5Robot.MoveBase(0.75,0,0);            %CheckOk <!
+                end
+                
+                % Homing TM5 before pick
+                homeQTM5 = tm5Robot.qHomePick;
+                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+    
+                % Generate path for both TM12 and TM5 to move on top of the product 2 and 1 (move without product)
+                initalProduct2Pose = products{k}.baseTr;
+                tm12EndPose = initalProduct2Pose;
+                tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.3;       % Fixed!
+                waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
+                
+                pickUpProductPose = products{k-1}.baseTr;
+                tm5EndPose = pickUpProductPose;
+                tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.3;         % Fixed!
+                waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);        
+                
+                % --- TM12 and TM5 move to on top of product 2 and product 1 (move without product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                end             
+                
+                % Generate path for both TM12 and TM5 to pick up product 2 and 1 (move without product)
+                tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.06;  % Fixed!
+                waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
+    
+                tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.18; % Fixed!
+                waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
+                
+                % --- TM12 and TM5 move to pick up product 2 and product 1 (move without product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                end
+    
+                % Generate path for both TM12 and TM5 move the product 2 and 1 up (move with product)
+                tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.3;           %Fixed!
+                waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
+    
+                tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.5;             %Fixed!
+                waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
+    
+                % --- TM12 and TM5 move product 2 and product 1 up (move with product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k});
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k-1});
+                end
+    
+                % --- Rotate the base pi for both TM12 and TM5 (move with product)
+    
+                steps = 50;
+    
+                currentQTM5 = tm5Robot.model.getpos();
+                newQTM5 = currentQTM5;           % Fixed!
+                newQTM5(1) = currentQTM5(1) + pi;
+                tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, products{k-1});
+                % pathTM5 = jtraj(currentQTM5, newQTM5, steps);
+                
+                currentQTM12 = tm12Robot.model.getpos();
+                newQTM12 = currentQTM12;         % Fixed!
+                newQTM12(1) = currentQTM12(1) + pi;
+                % pathTM12 = jtraj(currentQTM12, newQTM12, steps);
+                tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, products{k});
+    
+                % for i=1:steps
+                %     tm12Robot.AnimatePath(pathTM12(i,:), 1, human, arm, self.mainAppHandle, products{2});
+                %     tm5Robot.AnimatePath(pathTM5(i,:), 1, human, arm, self.mainAppHandle, products{1});
+                % end
+                
+                % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
+                zProduct2 = initalProduct2Pose(3,4) + 0.3;
+                desiredDropOffTM12 = [1.25, 0, zProduct2];
+                waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
+    
+                baseTM5 = tm5Robot.model.base.T;
+                zProduct1 = baseTM5(3,4) + 0.3;
+                desiredDropOffTM5 = [0.25, 0, zProduct1];
+                waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
+    
+                % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k});
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k-1});
+                end
+    
+                % --- TM12 and TM5 move product 2 and product 1 to drop off position (move with product)
+                zProduct2 = initalProduct2Pose(3,4) + 0.05;
+                desiredDropOffTM12 = [1.25, 0, zProduct2];
+                waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
+    
+                baseTM5 = tm5Robot.model.base.T;
+                zProduct1 = baseTM5(3,4) + 0.125;
+                desiredDropOffTM5 = [0.25, 0, zProduct1];
+                waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
+    
+                % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k});
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{k-1});
+                end
+    
+                % --- TM12 and TM5 move product 2 and product 1 back to above drop off position (move without product)
+                zProduct2 = initalProduct2Pose(3,4) + 0.3;
+                desiredDropOffTM12 = [1.25, -0.2, zProduct2];
+                waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
+    
+                baseTM5 = tm5Robot.model.base.T;
+                zProduct1 = baseTM5(3,4) + 0.3;
+                desiredDropOffTM5 = [0.25, 0, zProduct1];
+                waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
+    
+                % --- TM12 and TM5 move product 2 and product 1 back to above drop off position (move without product)
+                for i=1:49
+                    startPoseTM12 = waypointsTM12(i, :);
+                    endPoseTM12 = waypointsTM12(i+1, :);
+    
+                    startPoseTM5 = waypointsTM5(i,:);
+                    endPoseTM5 = waypointsTM5(i+1,:);
+    
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle);
+                end
+                %-------------- End of sample path ----------
             end
-
-            % Generate path for both TM12 and TM5 move the product 2 and 1 up (move with product)
-            tm12EndPose(3,4) = initalProduct2Pose(3,4) + 0.3;           %Fixed!
-            waypointsTM12 = self.GeneratePath(tm12Robot, tm12EndPose);
-
-            tm5EndPose(3,4) = pickUpProductPose(3,4) + 0.3;             %Fixed!
-            waypointsTM5 = self.GeneratePath(tm5Robot, tm5EndPose);
-
-            % --- TM12 and TM5 move product 2 and product 1 up (move with product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{2});
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{1});
-            end
-
-            % --- Rotate the base pi for both TM12 and TM5 (move with product)
-
-            steps = 50;
-
-            currentQTM5 = tm5Robot.model.getpos();
-            newQTM5 = currentQTM5;           % Fixed!
-            newQTM5(1) = currentQTM5(1) + pi;
-            tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, products{1});
-            % pathTM5 = jtraj(currentQTM5, newQTM5, steps);
-            
-            currentQTM12 = tm12Robot.model.getpos();
-            newQTM12 = currentQTM12;         % Fixed!
-            newQTM12(1) = currentQTM12(1) + pi;
-            % pathTM12 = jtraj(currentQTM12, newQTM12, steps);
-            tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, products{2});
-
-            % for i=1:steps
-            %     tm12Robot.AnimatePath(pathTM12(i,:), 1, human, arm, self.mainAppHandle, products{2});
-            %     tm5Robot.AnimatePath(pathTM5(i,:), 1, human, arm, self.mainAppHandle, products{1});
-            % end
-            
-            % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
-            zProduct2 = initalProduct2Pose(3,4) + 0.3;
-            desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
-
-            baseTM5 = tm5Robot.model.base.T;
-            zProduct1 = baseTM5(3,4) + 0.3;
-            desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
-            
-            % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{2});
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{1});
-            end
-
-            % --- TM12 and TM5 move product 2 and product 1 to drop off position (move with product)
-            zProduct2 = initalProduct2Pose(3,4) + 0.05;
-            desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
-
-            baseTM5 = tm5Robot.model.base.T;
-            zProduct1 = baseTM5(3,4) + 0.05;
-            desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
-            
-            % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{2});
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{1});
-            end
-
-            % --- TM12 and TM5 move product 2 and product 1 back to drop off position (move without product)
-            zProduct2 = initalProduct2Pose(3,4) + 0.3;
-            desiredDropOffTM12 = [1.25, -0.2, zProduct2];
-            waypointsTM12 = self.GeneratePath(tm12Robot, transl(desiredDropOffTM12));
-
-            baseTM5 = tm5Robot.model.base.T;
-            zProduct1 = baseTM5(3,4) + 0.3;
-            desiredDropOffTM5 = [0, 0, zProduct1];
-            waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
-            
-            % --- TM12 and TM5 move product 2 and product 1 back to above drop off position (move without product)
-            for i=1:49
-                startPoseTM12 = waypointsTM12(i, :);
-                endPoseTM12 = waypointsTM12(i+1, :);
-
-                startPoseTM5 = waypointsTM5(i,:);
-                endPoseTM5 = waypointsTM5(i+1,:);
-
-                tm12Robot.rmrc(startPoseTM12, endPoseTM12, tm12Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{2});
-                tm5Robot.rmrc(startPoseTM5, endPoseTM5, tm5Robot.model.getpos, 0.1, 2, human, arm, self.mainAppHandle, products{1});
-            end
-            %-------------- End of sample path ----------
         end
 
         %% Fucntion to avoid collision
