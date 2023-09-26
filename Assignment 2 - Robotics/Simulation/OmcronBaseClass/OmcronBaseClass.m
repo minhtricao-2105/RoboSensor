@@ -28,7 +28,9 @@ classdef OmcronBaseClass < handle
 
         % Check obstacle avoidance
         obstacleAvoidance = false;
-
+        
+        % Check AvoidCollision
+        avoidArmCheck = true;
     end
 
     properties (Hidden)
@@ -538,7 +540,7 @@ classdef OmcronBaseClass < handle
 
 
         function rmrc(self, startPose, endPose, qGuess, totalTime, totalSteps, humanObject, obstacleObject, app, object)
-
+            
             % Check whenever we want to move the object with the robot:
             moveObject = true;
             
@@ -650,18 +652,25 @@ classdef OmcronBaseClass < handle
 
                     % Turn on the Switch Button
                     app.EStopSwitch.Enable = "on";
+                    
+                    % Toggle the Lamp for Warning in the app:
+                    if checkCollision == true
+                        app.ToggleLampLight();
+                    end
 
                 else
                     i = i + 1;
                 end
 
                 % Check obstacle, then avoid collision
-                checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
-                if checkObstacle == true
-                    self.obstacleAvoidance = true;
-                    break;
+                if self.avoidArmCheck == true
+                    checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
+                    if checkObstacle == true
+                        self.obstacleAvoidance = true;
+                        break;
+                    end
                 end
-                
+           
                 % Update the data of the robot to the gui:
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
@@ -669,6 +678,7 @@ classdef OmcronBaseClass < handle
                 pause(0.05)
 
             end 
+           
         end
 
         %% Enable E-Stop    (call back function from GUI)
@@ -738,7 +748,7 @@ classdef OmcronBaseClass < handle
             
             distance = norm(intersectionPoint-eeRobot);
 
-            if ((check == 1) && (distance < 0.5))
+            if ((check == 1) && (distance < 0.2))
                 checkObstacle = true;
             else
                 checkObstacle = false;

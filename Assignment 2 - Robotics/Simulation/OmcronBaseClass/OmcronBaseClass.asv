@@ -552,18 +552,16 @@ classdef OmcronBaseClass < handle
             end
 
             % Set up the initial parameters:
-            t = totalTime; %2                             % Total Time of motion
-            steps = totalSteps; %50                        % Number of steps
-            deltaT = t/steps;                   % Small Angle Change
-            threshold = 0.2;                    % Threshhold value for manipulability
-            waypoints = zeros(steps,3);              % Waypoints matrix
+            t = totalTime;                              %<! Total Time of motion
+            steps = totalSteps;                         %<! Number of steps
+            deltaT = t/steps;                           %<! Small Angle Change
+            threshold = 0.2;                            %<! Threshhold value for manipulability
+            waypoints = zeros(steps,3);                 %<! Waypoints matrix
 
             % Allocate array data:
             qMatrix = zeros(steps, self.model.n);      % Array for joint Angels:
 
             % Set up trajectory:
-            % startPoint = startPose(1:3,4)';
-            % endPoint = endPose(1:3,4)';
             startPoint = startPose;
             endPoint = endPose;
 
@@ -573,7 +571,6 @@ classdef OmcronBaseClass < handle
             end
 
             % Solve joint angles to achieve first waypoint:
-            % qMatrix(1,:) = self.model.ikcon(startPose, qGuess);
             qMatrix(1,:) = self.model.getpos;
 
             % Animate the first q
@@ -581,6 +578,7 @@ classdef OmcronBaseClass < handle
 
             % Track the trajectory with RMRC:
             i=1;
+            
             while i < steps
 
                 % Get forward transformation at current joint state:
@@ -651,7 +649,12 @@ classdef OmcronBaseClass < handle
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
-                    % app.EStopSwitch.Enable = "on";
+                    app.EStopSwitch.Enable = "on";
+                    
+                    % Toggle the Lamp for Warning in the app:
+                    if checkCollision == true
+                        app.ToggleLampLight();
+                    end
 
                 else
                     i = i + 1;
@@ -660,13 +663,14 @@ classdef OmcronBaseClass < handle
                 % Check obstacle, then avoid collision
                 checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
                 if checkObstacle == true
+                    if 
                     self.obstacleAvoidance = true;
                     break;
                 end
                 
                 % Update the data of the robot to the gui:
-                % app.UpdateJointStateData();
-                % app.UpdateEndEffectorData();
+                app.UpdateJointStateData();
+                app.UpdateEndEffectorData();
 
                 pause(0.05)
 

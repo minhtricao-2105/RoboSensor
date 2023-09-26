@@ -16,7 +16,7 @@ classdef Mission < handle
             
             % This is 1 path
             currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
-            tm12EndPose = currentPose*transl(-0.4, -0.5, 0.5);
+            tm12EndPose = currentPose*transl(0.7, 0, 0);
             % waypoints = self.GeneratePath(tm12Robot, tm12EndPose);
             % steps = 50;
             % for i=1:steps-1
@@ -45,8 +45,9 @@ classdef Mission < handle
         %% Fucntion to avoid collision
         function AvoidCollision(self, robot, endPose, human, arm, app)
             % Move up a little bit
+            robot.avoidArmCheck = false;
             startPose = robot.model.fkine(robot.model.getpos()).T;
-            endPoseTemp = startPose * transl(0,0,-0.5);
+            endPoseTemp = startPose * transl(0,0,-0.3);
             startPose = startPose(1:3,4)';
             endPoseTemp = endPoseTemp(1:3,4)';
             robot.rmrc(startPose, endPoseTemp, robot.model.getpos(), 2, 10, human, arm, app);
@@ -55,6 +56,9 @@ classdef Mission < handle
             startPose = robot.model.fkine(robot.model.getpos()).T;
             startPose = startPose(1:3,4)';
             robot.rmrc(startPose, endPose, robot.model.getpos(), 2, 50, human, arm, app);
+
+            robot.avoidArmCheck = true;
+
         end
         
         %% Function
@@ -63,11 +67,15 @@ classdef Mission < handle
             % Get the start pose:
             for i = 1:50
                 startPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
-                endPose = startPose*transl(0,0,0.3);
-                tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos, human, arm, self.mainAppHandle);
-                startPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
+                endPose = startPose*transl(0,0,0.2);
+                startPoint = startPose(1:3,4)';
+                endPoint = endPose(1:3,4)';
+                tm12Robot.rmrc(startPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+                startPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;
                 endPose = startPose*transl(0,0,-0.3);
-                tm12Robot.rmrc(startPose, endPose, tm12Robot.model.getpos, human, arm, self.mainAppHandle);
+                startPoint = startPose(1:3,4)';
+                endPoint = endPose(1:3,4)';
+                tm12Robot.rmrc(startPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
             end
        
         end
@@ -85,6 +93,24 @@ classdef Mission < handle
                 waypoints(i, :) = (1 - t) * startPoint + t * endPoint;
             end
             waypointsT = waypoints;
+        end
+
+        %% Function to move the two robots to homing position:
+        function HomingRobot(self, tm5Robot, tm12Robot)
+            
+            % Define the homing position of the two robot:
+            tm5qHome  = [pi, -pi/2, -pi/2, -pi/2, pi/2, 0];
+            tm12qHome = [pi, -pi/2, -pi/2, -pi/2, pi/2, 0];
+            
+            % Create a trajectory for homing position
+            path1 = jtraj(tm5Robot.model.getpos, tm5qHome, 50);
+            path2 = jtraj(tm12Robot.model.getpos, tm12qHome, 50);
+
+            for i = 1:50
+                tm5Robot.model.animate(path1(i,:));
+                tm12Robot.model.animate(path2(i,:));
+                pause(0.05);
+            end
         end
 
 
