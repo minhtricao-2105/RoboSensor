@@ -483,49 +483,74 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, path, eStop, object)
+        function AnimatePath(self, newQ, object)
 
             % Setup the initial parameter:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 4
+            if nargin < 3
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
                 eeTr = self.model.fkine(self.model.getpos).T;
                 objectEE = inv(eeTr)*object.baseTr;
             end
+            
+            % Get current joint angle
+            currentQ = self.model.getpos();
 
-            % If there is no input of the e-stop
-            if nargin < 3
-                eStop = false;
-            end
+            % Create path to move from current pose to desired pose
+            qMatrix = jtraj(currentQ, newQ, 50);
+
+            % Animate robot move simutaneously with the product
             
             % Animate the path:
-            for i = 1:size(path,1)
-                
-                % Check if the estop is pressed or not:
-                if eStop == false
-                    % Get the transformation of the end-effector:
-                    eeTr = self.model.fkine(path(i,:)).T;
+            i=1;
+            while i < size(qMatrix)
+                self.model.animate(qMatrix(i,:));
+                eeTr = self.model.fkine(qMatrix(i,:)).T;
 
-                    % Animate the robot:
-                    self.model.animate(path(i,:));
+                if moveObject
+                    transform = eeTr*objectEE;
+                    object.moveObject(transform);
+                end
 
-                    % Animate the movement of the object:
-                    if moveObject
-                        transform = eeTr*objectEE;
-                        object.moveObject(transform);
+                % Check human intersect with workspace
+                checkCollision = self.HumanCollisionCheck(humanObject);
+
+                % Check stop 
+                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
+                    i = i;
+                    disp("EMERGENCY STOP!");
+
+                    % Turn on the Switch Button
+                    app.ActivateSafetyMode;
+                    
+                    % Toggle the Lamp for Warning in the app:
+                    if checkCollision == true
+                        app.ToggleLampLight();
                     end
 
-                    % Create a small pause:
-                    pause(0.001);
-
                 else
-                    print('[SYSTEM]: E-STOP IS TRIGGERED !!');
-                    i = i - 1;
+                    i = i + 1;
                 end
+
+                % Check obstacle, then avoid collision
+                if self.avoidArmCheck == true
+                    checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
+                    if checkObstacle == true
+                        self.obstacleAvoidance = true;
+                        break;
+                    end
+                end
+
+                % Update the data of the robot to the gui:
+                app.UpdateJointStateData();
+                app.UpdateEndEffectorData();
+
+                pause(0.05)
+                
             end
         end
 

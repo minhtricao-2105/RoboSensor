@@ -28,7 +28,9 @@ classdef OmcronBaseClass < handle
 
         % Check obstacle avoidance
         obstacleAvoidance = false;
-
+        
+        % Check AvoidCollision
+        avoidArmCheck = true;
     end
 
     properties (Hidden)
@@ -80,7 +82,7 @@ classdef OmcronBaseClass < handle
             self.axis_h = gca;
             initialSurfaceCount = self.CountTiledFloorSurfaces();
 
-            self.model.plot3d(self.homeQ,'noarrow','notiles','workspace',self.workspace);
+            self.model.plot3d(self.homeQ,'noarrow','nowrist','notiles','workspace',self.workspace);
 
             % Check if a single surface has been added by plot3d
             if self.CountTiledFloorSurfaces() - initialSurfaceCount == 1
@@ -481,24 +483,24 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, path, eStop, object)
+        function AnimatePath(self, newQ, object)
 
             % Setup the initial parameter:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 4
+            if nargin < 3
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
                 eeTr = self.model.fkine(self.model.getpos).T;
                 objectEE = inv(eeTr)*object.baseTr;
             end
+            
+            % Get current joint angle
+            currentQ = self.model.getpos();
 
-            % If there is no input of the e-stop
-            if nargin < 3
-                eStop = false;
-            end
+            % Create path to move from current pose to desired pose
             
             % Animate the path:
             for i = 1:size(path,1)
@@ -538,7 +540,7 @@ classdef OmcronBaseClass < handle
 
 
         function rmrc(self, startPose, endPose, qGuess, totalTime, totalSteps, humanObject, obstacleObject, app, object)
-
+            
             % Check whenever we want to move the object with the robot:
             moveObject = true;
             
@@ -649,7 +651,7 @@ classdef OmcronBaseClass < handle
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
-                    app.EStopSwitch.Enable = "on";
+                    app.ActivateSafetyMode;
                     
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
@@ -661,13 +663,14 @@ classdef OmcronBaseClass < handle
                 end
 
                 % Check obstacle, then avoid collision
-                checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
-                if checkObstacle == true
-                    if 
-                    self.obstacleAvoidance = true;
-                    break;
+                if self.avoidArmCheck == true
+                    checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
+                    if checkObstacle == true
+                        self.obstacleAvoidance = true;
+                        break;
+                    end
                 end
-                
+           
                 % Update the data of the robot to the gui:
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
@@ -675,6 +678,7 @@ classdef OmcronBaseClass < handle
                 pause(0.05)
 
             end 
+           
         end
 
         %% Enable E-Stop    (call back function from GUI)
@@ -744,7 +748,7 @@ classdef OmcronBaseClass < handle
             
             distance = norm(intersectionPoint-eeRobot);
 
-            if ((check == 1) && (distance < 0.5))
+            if ((check == 1) && (distance < 0.2))
                 checkObstacle = true;
             else
                 checkObstacle = false;

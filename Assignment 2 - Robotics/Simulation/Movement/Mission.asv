@@ -21,7 +21,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = initalProductPose(1:3,4)';
-            desiredTM12Point = desiredTM12Point(3) + 0.2; % adjust the height
+            desiredTM12Point(3) = desiredTM12Point(3) + 0.2; % adjust the height
 
             % Use RMRC to move the TM12 to on top of the product
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
@@ -31,7 +31,7 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = initalProductPose(1:3,4)';
-            desiredTM12Point = desiredTM12Point(3) + 0.05; % adjust the height
+            desiredTM12Point(3) = desiredTM12Point(3) + 0.05; % adjust the height
 
             % Use RMRC to move the TM12 to the product
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
@@ -41,10 +41,15 @@ classdef Mission < handle
 
             currentTM12Point = currentTM12Pose(1:3,4)';
             desiredTM12Point = initalProductPose(1:3,4)';
-            desiredTM12Point = desiredTM12Point(3) + 0.2; % adjust the height
+            desiredTM12Point(3) = desiredTM12Point(3) + 0.2; % adjust the height
 
             % Use RMRC to move the TM12 with product upward
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products{1});
+            
+            % ////////// Rotate the base pi
+            newQ = tm12Robot.model.getpos();
+            newQ = newQ(1) + pi;
+            tm12Robot.AnimatePath(newQ,products{1});
 
             % ////////// Move the product to dropp off position
             currentTM12Pose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;  
@@ -53,23 +58,25 @@ classdef Mission < handle
             z = initalProductPose(3,4);
             desiredTM12Point = [1.25, -0.5, z];
 
-            % Use RMRC to move the TM12 with product upward
+            % Use RMRC to place the product in desired position
             tm12Robot.rmrc(currentTM12Point, desiredTM12Point, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle, products{1});
+
+            % Use RMRC to move TM12 upward
 
             %////////////////// End of sample path //////////////////
 
             % This is 1 path
-            currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;
-            tm12EndPose = currentPose*transl(0.7, 0, 0);
-
-            currentPoint = currentPose(1:3,4)';
-            endPoint = tm12EndPose(1:3,4)';
-
-            tm12Robot.rmrc(currentPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
-            if (tm12Robot.obstacleAvoidance == true)
-                self.AvoidCollision(tm12Robot, endPoint, human, arm, self.mainAppHandle);
-                disp('Fixing');
-            end
+            % currentPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;
+            % tm12EndPose = currentPose*transl(0.7, 0, 0);
+            % 
+            % currentPoint = currentPose(1:3,4)';
+            % endPoint = tm12EndPose(1:3,4)';
+            % 
+            % tm12Robot.rmrc(currentPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            % if (tm12Robot.obstacleAvoidance == true)
+            %     self.AvoidCollision(tm12Robot, endPoint, human, arm, self.mainAppHandle);
+            %     disp('Fixing');
+            % end
             % end of path
 
         end
