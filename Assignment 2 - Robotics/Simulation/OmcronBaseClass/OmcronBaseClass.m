@@ -483,13 +483,13 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, newQ, object)
+        function AnimatePath(self, newQ, humanObject, obstacleObject, app, object)
 
             % Setup the initial parameter:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 3
+            if nargin < 6
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
