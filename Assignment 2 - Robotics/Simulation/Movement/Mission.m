@@ -48,7 +48,7 @@ classdef Mission < handle
             
             % --- Rotate the base pi
             newQ = tm12Robot.model.getpos();
-            newQ = newQ(1) + pi;
+            newQ(1) = newQ(1) + pi;
             tm12Robot.AnimatePath(newQ,human,arm,self.mainAppHandle,products{1});
 
             % --- Move the product to dropp off position
