@@ -82,7 +82,7 @@ classdef OmcronBaseClass < handle
             self.axis_h = gca;
             initialSurfaceCount = self.CountTiledFloorSurfaces();
 
-            self.model.plot3d(self.homeQ,'noarrow','notiles','workspace',self.workspace);
+            self.model.plot3d(self.homeQ,'noarrow','nowrist','notiles','workspace',self.workspace);
 
             % Check if a single surface has been added by plot3d
             if self.CountTiledFloorSurfaces() - initialSurfaceCount == 1
@@ -651,7 +651,7 @@ classdef OmcronBaseClass < handle
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
-                    app.EStopSwitch.Enable = "on";
+                    app.ActivateSafetyMode;
                     
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
