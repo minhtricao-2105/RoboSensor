@@ -564,13 +564,13 @@ classdef OmcronBaseClass < handle
         % Cartesian plane.
 
 
-        function rmrc(self, startPose, endPose, qGuess, totalTime, totalSteps, humanObject, obstacleObject, app, object)
+        function rmrc(self, startPose, endPose, totalTime, totalSteps, humanObject, obstacleObject, app, object)
             
             % Check whenever we want to move the object with the robot:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 10
+            if nargin < 9
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
