@@ -1,0 +1,8 @@
+prefix=/home/minhtricao/git/RoboSensor/omcron_package/build/devel
+
+Name: omcron_package
+Description: Description of omcron_package
+Version: 0.0.0
+Cflags: -I/home/minhtricao/git/RoboSensor/omcron_package/build/devel/include
+Libs: -L${prefix}/lib 
+Requires: 

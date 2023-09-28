@@ -1,0 +1,10 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/omcron_package_generate_messages_py"
+  "devel/lib/python3/dist-packages/omcron_package/srv/_SetPosition.py"
+  "devel/lib/python3/dist-packages/omcron_package/srv/__init__.py"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang )
+  include(CMakeFiles/omcron_package_generate_messages_py.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()
