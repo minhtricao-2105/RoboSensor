@@ -82,7 +82,7 @@ classdef OmcronBaseClass < handle
             self.axis_h = gca;
             initialSurfaceCount = self.CountTiledFloorSurfaces();
 
-            self.model.plot3d(self.homeQ,'noarrow','notiles','workspace',self.workspace);
+            self.model.plot3d(self.homeQ,'noarrow','nowrist','notiles','workspace',self.workspace);
 
             % Check if a single surface has been added by plot3d
             if self.CountTiledFloorSurfaces() - initialSurfaceCount == 1
@@ -143,18 +143,8 @@ classdef OmcronBaseClass < handle
                 
                 % Get the current transform:
                 currentTr = transform(:,:,i);
-                
-                if i == 6
-                    currentTr(3,4) = currentTr(3,4) - 0.15;
-                end
 
-                % Check the ground collision:
-                if abs(currentTr(3,4) - base(3,4)) < 0.07
-                    check = true;
-                    break;
-                else
-                    check = false;
-                end
+                % Check the Z of the 
                
             end
         end
