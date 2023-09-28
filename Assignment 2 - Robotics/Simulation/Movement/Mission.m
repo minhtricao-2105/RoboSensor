@@ -139,7 +139,7 @@ classdef Mission < handle
 
                 % --- Move TM5 approach the table
                 if(k == 2)
-                    tm5Robot.MoveBase(0.75,0,0);
+                    tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle);
                 end
 
                 % --- Homing the TM5 Robot before picking the brick:
@@ -201,7 +201,7 @@ classdef Mission < handle
                 % - Generate Path and Rotate the TM5:
                 currentQTM5 = tm5Robot.model.getpos();
                 newQTM5 = currentQTM5;
-                newQTM5(1) = currentQTM5(1) + pi;
+                newQTM5(1) = currentQTM5(1) - pi;
                 tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, products{k-1});
 
                 % - Generate Path and Rotate the TM12
@@ -221,7 +221,14 @@ classdef Mission < handle
                 % - Generate Path for the TM5 to the above position before dropping off the product:
                 baseTM5 = tm5Robot.model.base.T;
                 zProduct1 = baseTM5(3,4) + 0.4;
-                desiredDropOffTM5 = [0.15, 0, zProduct1];
+                desiredDropOffTM5 = [0.1, -0.1, zProduct1];
+                if (k == 2) || (k == 5)
+                    desiredDropOffTM5 = [0.1, -0.1, zProduct1];
+                elseif (k == 3) || (k == 6)
+                    desiredDropOffTM5 = [0.1, 0.1, zProduct1];
+                elseif (k == 4)
+                    desiredDropOffTM5 = [0.35, 0, zProduct1];
+                end
                 waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
 
                 % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
@@ -237,8 +244,19 @@ classdef Mission < handle
 
                 % - Generate Path for the TM5 to drop off the product:
                 baseTM5 = tm5Robot.model.base.T;
-                zProduct1 = baseTM5(3,4) + 0.15;
-                desiredDropOffTM5 = [0.15, 0, zProduct1];
+                if (k == 2) || (k == 3) || (k == 4)
+                    zProduct1 = baseTM5(3,4) + 0.2;
+                elseif (k == 5) || (k == 6)
+                    zProduct1 = baseTM5(3,4) + 0.25;
+                end
+                desiredDropOffTM5 = [0.1, -0.1, zProduct1];
+                if (k == 2) || (k == 5)
+                    desiredDropOffTM5 = [0.1, -0.1, zProduct1];
+                elseif (k == 3) || (k == 6)
+                    desiredDropOffTM5 = [0.1, 0.1, zProduct1];
+                elseif (k == 4)
+                    desiredDropOffTM5 = [0.35, 0, zProduct1];
+                end
                 waypointsTM5 = self.GeneratePath(tm5Robot, transl(desiredDropOffTM5));
 
                 % --- TM12 and TM5 move product 2 and product 1 to above drop off position (move with product)
@@ -254,7 +272,7 @@ classdef Mission < handle
 
                 % - Generate Path for the TM5 to move up before homing
                 desiredPoseTM5 = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
-                desiredPoseTM5(3,4) = desiredPoseTM5(3,4) + 0.3;
+                desiredPoseTM5(3,4) = desiredPoseTM5(3,4) + 0.2;
                 waypointsTM5 = self.GeneratePath(tm5Robot, desiredPoseTM5);
 
                 % --- TM12 and TM5 move product 2 and product 1 back to above drop off position (move without product)
@@ -263,6 +281,197 @@ classdef Mission < handle
                 %-------------- End of sample path ----------
             end
         end
+
+        %% Function robot move step 3
+        function PickLastProduct(self, tm5Robot, tm12Robot, human, arm, products)
+            % -------------- Sample path for last product -----------
+            tm12qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
+            tm12Robot.AnimatePath(tm12qHome, 50, human, arm, self.mainAppHandle);
+
+            % --- Homing the TM5 Robot before picking the brick:
+            homeQTM5 = tm5Robot.qHomePick;
+            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+            
+            % --- I. Get on top of the last product (move without product)
+            % WayPoint1: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            initalProductPose = products.baseTr;
+
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            desiredTM5Point = initalProductPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.3; % adjust the height
+
+            % Use RMRC to move the TM5 to on top of the product
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- II. Move the TM5 to the pick up position (move without product)
+            % WayPoint2: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            desiredTM5Point = initalProductPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.18; % adjust the height
+
+            % Use RMRC to move the TM12 to the product
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- III. Move the product up (move with porduct)
+            % WayPoint3: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            desiredTM5Point = initalProductPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.5; % adjust the height
+
+            % Use RMRC to move the TM12 with product upward
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, products);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- IV. Rotate the base by 180 degrees:
+            newQ = tm5Robot.model.getpos();
+            newQ(1) = newQ(1) - pi;
+            tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- V. Move the product to above drop off position
+            % WayPoint4: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            baseTM5 = tm5Robot.model.base.T;
+            z = baseTM5(3,4) + 0.4;
+            desiredDropOff = [0.35, 0, z];
+
+            % Use RMRC to place the product in above dropp off position
+            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- VI. Move the product to the drop off position
+            % WayPoint5: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            baseTM5 = tm5Robot.model.base.T;
+            z = baseTM5(3,4) + 0.25;
+            desiredDropOff = [0.35, 0, z];
+
+            % Use RMRC to place the product in above dropp off position
+            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % --- VII. Move the TM12 upward after drooping the product:
+            % WayPoint6: Define start point and end point and use it for RMRC
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            desiredTM5Point = desiredDropOff;
+            desiredTM5Point(3) = desiredDropOff(3) + 0.3; % adjust the height
+
+            % Use RMRC to move the TM12 to upward and ready for next product
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+
+            % Apply avoid collision:
+            if (tm5Robot.obstacleAvoidance == true)
+                self.AvoidCollision(tm5Robot, endPoint, human, arm, self.mainAppHandle);
+                disp('Fixing');
+            end
+
+            % -------------- End of path ---------------
+        end
+
+        %% Function move TM5 to fill the shelves
+        function TM5FillProduct(self, tm5Robot, tm12Robot, human, arm, products)
+            % -------------- Sample path for deliver product -----------
+
+            % --- I. Deliver red product location
+            tm5Robot.MoveBase(-0.75, -1.8, 0, human, self.mainAppHandle, products);
+            tm5Robot.MoveBase(0, 0, -90, human, self.mainAppHandle, products);
+            
+            % --- II. Go to above position of red product (move without product)
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            pickUpPose = products{4}.baseTr;
+
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            desiredTM5Point = pickUpPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
+
+            % Use RMRC to move the TM5 to the product
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+
+            % --- III. Go to pick up red product (move without product)
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+
+            desiredTM5Point = pickUpPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.18;
+
+            % Use RMRC to move the TM5 to on top of the product
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+
+            % --- IV. Go back to above position of the red product (move product)
+            currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            currentTM5Point = currentTM5Pose(1:3,4)';
+            
+            desiredTM5Point = pickUpPose(1:3,4)';
+            desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
+
+            % Use RMRC to move the TM5 with the product upward
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, products{4});
+
+            % --- V. Rotate the base by 180 degrees:
+            % newQ = tm5Robot.model.getpos();
+            % newQ(1) = newQ(1) - pi;
+            % tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{4});
+
+            homeQTM5 = tm5Robot.qHomePick;
+            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, products{4});
+
+            % --- VI. Adjust the orientation of the product
+            newQ = tm5Robot.model.getpos();
+            newQ(4) = newQ(4) + 36;
+            tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{4});
+
+            % --- VII. Move to desired location
+            % currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            % currentTM5Point = currentTM5Pose(1:3,4)';
+            % 
+            % baseTM5 = tm5Robot.model.base.T;
+            % z = baseTM5(3,4) + 0.4;
+            % desiredDropOff = [0.35, 0, z];
+            % 
+            % % Use RMRC to place the product in above dropp off position
+            % tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products{4});
+            
+            % -------------- End of path ---------------
+        end
+
 
         %% Fucntion to avoid collision
         function AvoidCollision(self, robot, endPose, human, arm, app)
@@ -285,20 +494,44 @@ classdef Mission < handle
 
         %% Function
         function testMain(self, tm5Robot, tm12Robot, human, arm)
+            tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle);
+
+            startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            startPoint = startPose(1:3,4)';
+            desiredDropOffTM5 = [1.25, 0, 0.95];
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
+
+            startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            startPoint = startPose(1:3,4)';
+            desiredDropOffTM5 = [1.25, 0, 1.25];
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
+
+            currentQ = tm5Robot.model.getpos();
+            newQ = currentQ;
+            newQ(1) = currentQ(1) - pi;
+            tm5Robot.AnimatePath(newQ, 50, human, arm, self.mainAppHandle);
+
+            startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            startPoint = startPose(1:3,4)';
+            baseTM5 = tm5Robot.model.base.T;
+            zProduct1 = baseTM5(3,4) + 0.1;
+            desiredDropOffTM5 = startPoint;
+            desiredDropOffTM5(3) = zProduct1;
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
 
             % Get the start pose:
-            for i = 1:50
-                startPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T
-                endPose = startPose*transl(0,0,0.2);
-                startPoint = startPose(1:3,4)';
-                endPoint = endPose(1:3,4)';
-                tm12Robot.rmrc(startPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
-                startPose = tm12Robot.model.fkine(tm12Robot.model.getpos).T;
-                endPose = startPose*transl(0,0,-0.3);
-                startPoint = startPose(1:3,4)';
-                endPoint = endPose(1:3,4)';
-                tm12Robot.rmrc(startPoint, endPoint, tm12Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
-            end
+            % for i = 1:50
+            %     startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            %     endPose = startPose*transl(0,0,0.2);
+            %     startPoint = startPose(1:3,4)';
+            %     endPoint = endPose(1:3,4)';
+            %     tm5Robot.rmrc(startPoint, endPoint, tm5Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            %     startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
+            %     endPose = startPose*transl(0,0,-0.3);
+            %     startPoint = startPose(1:3,4)';
+            %     endPoint = endPose(1:3,4)';
+            %     tm5Robot.rmrc(startPoint, endPoint, tm5Robot.model.getpos, 2, 50, human, arm, self.mainAppHandle);
+            % end
 
         end
 

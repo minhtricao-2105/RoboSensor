@@ -67,16 +67,13 @@ classdef TM5Mobile < OmcronBaseClass
         end
 
         %% Move base function
-        function MoveBase(self, x, y, yaw, human, app, products)
-            % flag stop
-            flagStop = false;
-
+        function MoveBase(self, x, y, yaw, app, products)
             % Check whenever we want to move the object with the robot:
             moveProduct = true;
             
             productsEE = {};
             % If there is no object input => No need to move the object
-            if nargin < 7
+            if nargin < 6
                 moveProduct = false;
             else
                 % Get the transformation between the EE and the object
@@ -89,11 +86,9 @@ classdef TM5Mobile < OmcronBaseClass
             
             i=1;
             while i < 50
-                if (flagStop == false)
-                    self.model.base = self.model.base.T*transl(-x/50, -y/50, 0)*trotz(deg2rad(yaw)/50);
-                    self.model.animate(self.model.getpos);
-                end
-
+                self.model.base = self.model.base.T*transl(-x/50, -y/50, 0)*trotz(deg2rad(yaw)/50);
+                self.model.animate(self.model.getpos);
+                
                 eeTr = self.model.base.T;
                 if moveProduct
                     for k=1:6
@@ -102,9 +97,8 @@ classdef TM5Mobile < OmcronBaseClass
                     end
                 end
                 
-                checkCollision = self.HumanCollisionCheck(human);
-
-                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
+                checkCollision = self.model.HumanCollisionCheck(humanObject);
+                if (strcmp(self.model.robotState, 'stop') || strcmp(self.model.robotState, 'holding') || checkCollision == true)
                     i = i;
                     disp("EMERGENCY STOP!");
 
@@ -115,11 +109,9 @@ classdef TM5Mobile < OmcronBaseClass
                     if checkCollision == true
                         app.ToggleLampLight();
                     end
-                    
-                    flagStop = true;
+
                 else
                     i = i + 1;
-                    flagStop = false;
                 end
 
                 pause(0.05);
