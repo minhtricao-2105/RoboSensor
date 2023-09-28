@@ -16,7 +16,7 @@ srv_request = SetPositionRequest()
 
 # Setting Request Data:
 srv_request.motion_type = 1
-srv_request.positions = [0, 0, 0, pi/2, 0, pi]
+srv_request.positions = [0, 0, 0, 0, 0, 0]
 srv_request.velocity = 0.4
 srv_request.acc_time = 0.2
 srv_request.blend_percentage = False
