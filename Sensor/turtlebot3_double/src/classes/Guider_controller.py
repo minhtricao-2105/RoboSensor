@@ -15,10 +15,10 @@ class Guider:
     def __init__(self, stdscr):
 
         # Publisher:
-        self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/tb3_1/cmd_vel', Twist, queue_size=1)
 
         # Subcriber for the controller:
-        rospy.Subscriber('joy', Joy, self.joy_callbackoy_callback)
+        # rospy.Subscriber('joy', Joy, self.joy_callbackoy_callback)
         
         # Initializing the Twist message:
         self.move_cmd = Twist()
