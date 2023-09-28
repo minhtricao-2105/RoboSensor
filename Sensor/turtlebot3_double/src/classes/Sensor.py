@@ -141,6 +141,7 @@ class Sensor:
             durationRotate = lastRotation/1.82
             durationLinear = lastTranslation/0.26
 
+            #Go to the position first
             startTime = time.time()
             while True:
                 #Calculate the elapsed time
@@ -157,7 +158,7 @@ class Sensor:
                 if (elapseTime >= durationLinear):
                     break
 
-            #Get current time
+            #Get current time. Fix the angle
             startTime = time.time()
             while True:
                 #Calculate the elapsed time
@@ -173,25 +174,6 @@ class Sensor:
 
                 #If condition 
                 if (elapseTime >= durationRotate):
-                    break
-
-            startTime = time.time()
-            while True:
-                #Calculate the elapsed time
-                elapseTime = time.time() - startTime
-
-                linear_velocity = 0
-                if lastRotation > 0:
-                    angular_velocity = 1.82
-                elif lastRotation <0:
-                    angular_velocity = -1.82
-
-                self.move_cmd.linear.x = linear_velocity
-                self.move_cmd.angular.z = angular_velocity
-                self.cmd_vel_pub.publish(self.move_cmd)
-
-                #If condition 
-                if (elapseTime >= durationLinear):
                     break
 
             self.move_cmd.linear.x = 0.0
