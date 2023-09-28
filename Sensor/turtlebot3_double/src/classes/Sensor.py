@@ -4,10 +4,16 @@ import cv2
 print(cv2.getBuildInformation())
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np 
+import math
+import time
 
 # Import the Sensor message
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
+
+#For documentation only:
+#Max linear speed = 0.26
+#Max rational speed = 1.82 rad/s
 
 class Sensor:
 
@@ -34,6 +40,10 @@ class Sensor:
 
         # Initializing the Twist message:
         self.move_cmd = Twist()
+
+        # Initializing the translation and rotation vec
+        self.translation = None
+        self.rotation = None
 
     # Callback function for the subscriber:
     def depth_callback(self, msg):
@@ -81,8 +91,8 @@ class Sensor:
 
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
             
-            print("rotation ", rvecs)
-            print("translation ", tvecs)
+            self.translation = tvecs
+            self.rotation = rvecs
             
 
             #now use rvecs and tvecs for controller
@@ -106,10 +116,10 @@ class Sensor:
             # Get the depth value from the depth image:
             depth = self.depth_image[center_y][center_x]
 
-            if depth < 0.5:
+            if depth < 0.3:
                 linear_velocity = 0.0
             else:
-                linear_velocity = 0.2
+                linear_velocity = 0.26
             
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
@@ -121,6 +131,69 @@ class Sensor:
             # Draw a circle at the center of the marker:
             cv2.circle(cv_image, (center_x, center_y), 5, (0, 0, 255), -1)
         else:
+            squaredDistance = self.translation(1)*self.translation(1) + self.translation(2)*self.translation(2)
+            lastTranslation = math.sqrt(squaredDistance)
+
+
+            lastRotation = self.rotation(3)
+
+            #Calculate time expected for turtlebot to get there
+            durationRotate = lastRotation/1.82
+            durationLinear = lastTranslation/0.26
+
+            startTime = time.time()
+            while True:
+                #Calculate the elapsed time
+                elapseTime = time.time() - startTime
+
+                linear_velocity = 0.26
+                angular_velocity = 0
+
+                self.move_cmd.linear.x = linear_velocity
+                self.move_cmd.angular.z = angular_velocity
+                self.cmd_vel_pub.publish(self.move_cmd)
+
+                #If condition 
+                if (elapseTime >= durationLinear):
+                    break
+
+            #Get current time
+            startTime = time.time()
+            while True:
+                #Calculate the elapsed time
+                elapseTime = time.time() - startTime
+                
+                linear_velocity = 0.0
+                angular_velocity = 1.82
+
+                self.move_cmd.linear.x = linear_velocity
+                self.move_cmd.angular.z = angular_velocity
+                self.cmd_vel_pub.publish(self.move_cmd)
+
+
+                #If condition 
+                if (elapseTime >= durationRotate):
+                    break
+
+            startTime = time.time()
+            while True:
+                #Calculate the elapsed time
+                elapseTime = time.time() - startTime
+
+                linear_velocity = 0
+                if lastRotation > 0:
+                    angular_velocity = 1.82
+                elif lastRotation <0:
+                    angular_velocity = -1.82
+
+                self.move_cmd.linear.x = linear_velocity
+                self.move_cmd.angular.z = angular_velocity
+                self.cmd_vel_pub.publish(self.move_cmd)
+
+                #If condition 
+                if (elapseTime >= durationLinear):
+                    break
+
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)

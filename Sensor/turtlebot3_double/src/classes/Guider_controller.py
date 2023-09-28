@@ -32,13 +32,13 @@ class Guider:
         self.stdscr.refresh()
 
     # Function to move the robot forward:
-    def move_forward(self, linear_speed = 0.2):
+    def move_forward(self, linear_speed = 0.1):
         self.move_cmd.linear.x = linear_speed
         self.move_cmd.angular.z = 0
         self.cmd_vel_pub.publish(self.move_cmd)
 
     # Function to move the robot backward:
-    def move_backward(self, linear_speed = -0.2):
+    def move_backward(self, linear_speed = -0.1):
         self.move_cmd.linear.x = linear_speed
         self.move_cmd.angular.z = 0.0
         self.cmd_vel_pub.publish(self.move_cmd)
@@ -54,17 +54,17 @@ class Guider:
         while True:
             key = self.stdscr.getch()
             if key == ord('w'):
-                self.move_cmd.linear.x = 0.2
+                self.move_cmd.linear.x = 0.1
                 self.move_cmd.angular.z = 0
             elif key == ord('s'):
-                self.move_cmd.linear.x = -0.2
+                self.move_cmd.linear.x = -0.1
                 self.move_cmd.angular.z = 0
             elif key == ord('a'):
                 self.move_cmd.linear.x = 0
-                self.move_cmd.angular.z = 1
+                self.move_cmd.angular.z = 0.2
             elif key == ord('d'):
                 self.move_cmd.linear.x = 0
-                self.move_cmd.angular.z = -1
+                self.move_cmd.angular.z = -0.2
             elif key == ord(' '): # space key to stop
                 self.move_cmd.linear.x = 0
                 self.move_cmd.angular.z = 0
