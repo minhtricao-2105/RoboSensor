@@ -12,7 +12,7 @@ class Controller:
     def __init__(self):
 
         # Publisher:
-        self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/tb3_1/cmd_vel', Twist, queue_size=1)
 
         # Subcriber for the controller:
         rospy.Subscriber('joy', Joy, self.joy_callback)

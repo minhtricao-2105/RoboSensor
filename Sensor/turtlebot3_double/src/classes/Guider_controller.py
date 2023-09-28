@@ -15,10 +15,10 @@ class Guider:
     def __init__(self, stdscr):
 
         # Publisher:
-        self.cmd_vel_pub = rospy.Publisher('/tb3_1/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
 
         # Subcriber for the controller:
-        # rospy.Subscriber('joy', Joy, self.joy_callbackoy_callback)
+        rospy.Subscriber('joy', Joy, self.joy_callbackoy_callback)
         
         # Initializing the Twist message:
         self.move_cmd = Twist()
@@ -54,17 +54,17 @@ class Guider:
         while True:
             key = self.stdscr.getch()
             if key == ord('w'):
-                self.move_cmd.linear.x = 0.1
+                self.move_cmd.linear.x = 0.15
                 self.move_cmd.angular.z = 0
             elif key == ord('s'):
-                self.move_cmd.linear.x = -0.1
+                self.move_cmd.linear.x = -0.15
                 self.move_cmd.angular.z = 0
             elif key == ord('a'):
                 self.move_cmd.linear.x = 0
-                self.move_cmd.angular.z = 0.2
+                self.move_cmd.angular.z = 0.5
             elif key == ord('d'):
                 self.move_cmd.linear.x = 0
-                self.move_cmd.angular.z = -0.2
+                self.move_cmd.angular.z = -0.5
             elif key == ord(' '): # space key to stop
                 self.move_cmd.linear.x = 0
                 self.move_cmd.angular.z = 0

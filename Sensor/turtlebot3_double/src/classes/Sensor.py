@@ -45,6 +45,10 @@ class Sensor:
         self.translation = None
         self.rotation = None
 
+        self.depth = None
+        self.center_x = None
+        self.center_y = None
+
     # Callback function for the subscriber:
     def depth_callback(self, msg):
 
@@ -101,45 +105,56 @@ class Sensor:
             cv2.aruco.drawDetectedMarkers(cv_image, markerCorners, markerIds)
 
             # Example: Taking the depth value of the first detected marker's center
-            center_x = int((markerCorners[0][0][0][0] + markerCorners[0][0][2][0]) / 2)
-            center_y = int((markerCorners[0][0][0][1] + markerCorners[0][0][2][1]) / 2)
+            self.center_x = int((markerCorners[0][0][0][0] + markerCorners[0][0][2][0]) / 2)
+            self.center_y = int((markerCorners[0][0][0][1] + markerCorners[0][0][2][1]) / 2)
 
             # Get the image width and height:
             height, width = cv_image.shape[:2]
 
-            error_x = center_x - width / 2
+            error_x = self.center_x - width / 2
 
             # Control stategy:
             # define Kp
             kp = 0.001
             angular_velocity = -kp*error_x
             # Get the depth value from the depth image:
-            depth = self.depth_image[center_y][center_x]
+            self.depth = self.depth_image[self.center_y][self.center_x]
 
-            if depth < 0.3:
+            if self.depth < 0.8:
                 linear_velocity = 0.0
             else:
-                linear_velocity = 0.26
+                linear_velocity = 0.23
             
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
             self.cmd_vel_pub.publish(self.move_cmd)
 
             # Display the value on the image:
-            cv2.putText(cv_image, str(depth), (center_x, center_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(cv_image, str(self.depth), (self.center_x, self.center_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
             # Draw a circle at the center of the marker:
-            cv2.circle(cv_image, (center_x, center_y), 5, (0, 0, 255), -1)
+            cv2.circle(cv_image, (self.center_x, self.center_y), 5, (0, 0, 255), -1)
         else:
-            squaredDistance = self.translation(1)*self.translation(1) + self.translation(2)*self.translation(2)
-            lastTranslation = math.sqrt(squaredDistance)
+            
+            # Stop the robot:
+            self.move_cmd.linear.x = 0.0
+            self.move_cmd.angular.z = 0.0
+            self.cmd_vel_pub.publish(self.move_cmd)
 
+            if self.translation is not None:
+                durationLinear = self.depth/0.26
+                print(durationLinear)
+            else:
+                durationLinear = 0
 
-            lastRotation = self.rotation(3)
+            # if self.rotation is not None:
+            #     lastRotation = self.rotation[0][0][2]
+            #     durationRotate = lastRotation/1.82
+            #     print(lastRotation)
+            # else:
+            #     durationRotate = 0
 
-            #Calculate time expected for turtlebot to get there
-            durationRotate = lastRotation/1.82
-            durationLinear = lastTranslation/0.26
+            durationRotate = math.asin(abs(self.center_x)/self.depth)/1.82
 
             #Go to the position first
             startTime = time.time()
@@ -155,17 +170,25 @@ class Sensor:
                 self.cmd_vel_pub.publish(self.move_cmd)
 
                 #If condition 
-                if (elapseTime >= durationLinear):
+                if (elapseTime >= durationLinear+0.98):
+                    print('break')
                     break
 
-            #Get current time. Fix the angle
+            self.move_cmd.linear.x = 0.0
+            self.move_cmd.angular.z = 0.0
+            self.cmd_vel_pub.publish(self.move_cmd)
+
+            # Get current time. Fix the angle
             startTime = time.time()
             while True:
                 #Calculate the elapsed time
                 elapseTime = time.time() - startTime
                 
                 linear_velocity = 0.0
-                angular_velocity = 1.82
+                if self.center_x > 0:
+                    angular_velocity = -1.82
+                else:
+                    angular_velocity = 1.82
 
                 self.move_cmd.linear.x = linear_velocity
                 self.move_cmd.angular.z = angular_velocity
@@ -173,12 +196,17 @@ class Sensor:
 
 
                 #If condition 
-                if (elapseTime >= durationRotate):
+                if (elapseTime >= durationRotate+0.5):
                     break
+
+  
 
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
+            # lastTranslation = 0
+            # lastRotation = 0
+
 
 
         # Now you can visualize the image with detected markers using OpenCV
