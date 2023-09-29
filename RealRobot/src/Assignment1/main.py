@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 import sys
 import os
-from onrobot_rg_control.msg import OnRobotRGOutput
+# from onrobot_rg_control.msg import OnRobotRGOutput
 
 # Get the current script directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Append the parent directory of the script directory to the Python path
 sys.path.append(os.path.join(script_dir, ".."))
 
-from Classes.GripperBaseClass import Gripper
+# from Classes.GripperBaseClass import Gripper
 from Classes.UR3e import*
 from hardcode import*
 
 # Setup the ROS Node:
 rospy.init_node('robot_node')
-pub   = rospy.Publisher('OnRobotRGOutput', OnRobotRGOutput, queue_size=1)
+# pub   = rospy.Publisher('OnRobotRGOutput', OnRobotRGOutput, queue_size=1)
 
 # Setup the Robot:
 robot = UR3e()
 
 # Setup the Gripper:
-gripper = Gripper()
+# gripper = Gripper()
 
 # Setup the Swift Environment:
 env = swift.Swift()
@@ -43,7 +43,7 @@ robot.set_up_moveIt(0.1)
 robot.arm.go(home_position)
 
 # Open the Gripper:
-pub.publish(gripper.OpenGripper())
+# pub.publish(gripper.OpenGripper())
 
 # Perform the pick and place:
 for i in range(len(brick_locations)):
@@ -55,7 +55,7 @@ for i in range(len(brick_locations)):
     robot.move_ee_up_down(env, delta_z = -0.075, speed = 1, real_robot = True)
 
     # Close the Gripper:
-    pub.publish(gripper.MoveGripperToPosition(position = 540))
+    # pub.publish(gripper.MoveGripperToPosition(position = 540))
 
     # Move Robot upL
     robot.move_ee_up_down(env, delta_z = 0.085, speed = 1, real_robot = True)
@@ -81,7 +81,7 @@ for i in range(len(brick_locations)):
         height = 0.02
 
     # Open the Gripper:
-    pub.publish(gripper.OpenGripper())
+    # pub.publish(gripper.OpenGripper())
 
     # Move Robot up:
     robot.move_ee_up_down(env, delta_z = height, speed = 1, real_robot = True)
