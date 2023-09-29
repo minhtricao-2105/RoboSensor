@@ -209,6 +209,8 @@ class Sensor:
 
 
 
+
+
         # Now you can visualize the image with detected markers using OpenCV
         cv2.imshow('Detected ArUco markers', cv_image)
         cv2.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.

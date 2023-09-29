@@ -50,8 +50,8 @@ class Controller:
             self.stop()
         else:
             if msg.axes[5] == 0.5:
-                self.move_cmd.linear.x = msg.axes[1]*0.2
-                self.move_cmd.angular.z = msg.axes[0]*0.2
+                self.move_cmd.linear.x = msg.axes[1]*0.05
+                self.move_cmd.angular.z = msg.axes[0]*0.05
                 self.cmd_vel_pub.publish(self.move_cmd)
             else:
                 self.move_cmd.linear.x = msg.axes[1]
