@@ -10,6 +10,7 @@ import time
 # Import the Sensor message
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
+from sklearn.linear_model import LinearRegression
 
 #For documentation only:
 #Max linear speed = 0.26
@@ -48,6 +49,10 @@ class Sensor:
         self.depth = None
         self.center_x = None
         self.center_y = None
+
+        self.last_translations = []  # List to store translation vectors
+        self.last_rotations = []     # List to store rotation vectors
+        self.max_readings = 50       # Maximum number of readings to keep
 
     # Callback function for the subscriber:
     def depth_callback(self, msg):
@@ -97,6 +102,16 @@ class Sensor:
             
             self.translation = tvecs
             self.rotation = rvecs
+
+            # Update last known translation and rotation
+            self.last_translations.append(self.translation)
+            self.last_rotations.append(self.rotation)
+
+            # Limit the size of the lists to the last 50 readings
+            if len(self.last_translations) > self.max_readings:
+                self.last_translations.pop(0)
+            if len(self.last_rotations) > self.max_readings:
+                self.last_rotations.pop(0)
             
 
             #now use rvecs and tvecs for controller
@@ -120,8 +135,13 @@ class Sensor:
             # Get the depth value from the depth image:
             self.depth = self.depth_image[self.center_y][self.center_x]
                         
-            if self.depth < 0.3 or self.center_x is None:
+            if self.depth == 0.3 or self.center_x is None:
                 linear_velocity = 0.0
+            # In case it need to be going reverse
+            elif self.depth < 0.3:
+                # Define kp for linear velocity
+                kp_linear = -0.25
+                linear_velocity = kp_linear*(self.depth)
             else:
                 # Define kp for linear velocity
                 kp_linear = 0.25
@@ -210,11 +230,96 @@ class Sensor:
 
 
 
+            #############################This is to calculate the trend, check it out#####################################################
+
+            # Calculate the trend in translation and rotation using linear regression
+            trend_translation = self.calculate_trend(self.last_translations)
+            trend_rotation = self.calculate_trend(self.last_rotations)
+
+            # Predict the current translation and rotation
+            predict_current_translation = self.predict_current_value(trend_translation, self.last_translations)
+            predict_current_rotation = self.predict_current_value(trend_rotation, self.last_rotations)
+
+            current_distance = math.sqrt(predict_current_translation[0][0][0]*predict_current_translation[0][0][0] + predict_current_translation[0][0][1]*predict_current_translation[0][0][1])
+            current_angular = predict_current_rotation[0][0][0] #Get yaw value
+
+            #Get time for linear
+            durationLinear = current_distance/0.26
+            durationRotate = abs(current_angular)/1.82
+
+            #Go to the position first
+            startTime = time.time()
+            while True:
+                #Calculate the elapsed time
+                elapseTime = time.time() - startTime
+
+                linear_velocity = 0.26
+                angular_velocity = 0
+
+                self.move_cmd.linear.x = linear_velocity
+                self.move_cmd.angular.z = angular_velocity
+                self.cmd_vel_pub.publish(self.move_cmd)
+
+                #If condition 
+                if (elapseTime >= durationLinear+0.98):
+                    print('break')
+                    break
+
+            self.move_cmd.linear.x = 0.0
+            self.move_cmd.angular.z = 0.0
+            self.cmd_vel_pub.publish(self.move_cmd)
+
+            # Get current time. Fix the angle
+            startTime = time.time()
+            while True:
+                #Calculate the elapsed time
+                elapseTime = time.time() - startTime
+                
+                linear_velocity = 0.0
+                if current_angular > 0:
+                    angular_velocity = -1.82
+                else:
+                    angular_velocity = 1.82
+
+                self.move_cmd.linear.x = linear_velocity
+                self.move_cmd.angular.z = angular_velocity
+                self.cmd_vel_pub.publish(self.move_cmd)
+
+
+                #If condition 
+                if (elapseTime >= durationRotate+0.5):
+                    break
+
+  
+
+            self.move_cmd.linear.x = 0.0
+            self.move_cmd.angular.z = 0.0
+            self.cmd_vel_pub.publish(self.move_cmd)
+            #########################################################################################
+
 
 
         # Now you can visualize the image with detected markers using OpenCV
         cv2.imshow('Detected ArUco markers', cv_image)
         cv2.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
+    
+    def calculate_trend(self, data):
+        # Calculate the trend (linear regression) for a given data set
+        n = len(data)
+        x = np.arange(n).reshape(-1, 1)
+        y = np.array(data)
+
+        model = LinearRegression()
+        model.fit(x, y)
+
+        trend = model.coef_[0]
+        return trend
+
+    def predict_current_value(self, trend, last_data):
+        # Predict the current value based on the trend
+        n = len(last_data)
+        current_value = last_data[-1] + (n * trend)
+        return current_value
 
 
 
