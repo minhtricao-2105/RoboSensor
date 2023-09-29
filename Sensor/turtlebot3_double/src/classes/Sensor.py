@@ -119,11 +119,13 @@ class Sensor:
             angular_velocity = -kp*error_x
             # Get the depth value from the depth image:
             self.depth = self.depth_image[self.center_y][self.center_x]
-
-            if self.depth < 0.8:
+                        
+            if self.depth < 0.3 or self.center_x is None:
                 linear_velocity = 0.0
             else:
-                linear_velocity = 0.23
+                # Define kp for linear velocity
+                kp_linear = 0.25
+                linear_velocity = kp_linear*(self.depth)
             
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
@@ -204,8 +206,7 @@ class Sensor:
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
-            # lastTranslation = 0
-            # lastRotation = 0
+
 
 
 
