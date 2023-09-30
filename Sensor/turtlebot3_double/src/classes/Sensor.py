@@ -141,7 +141,7 @@ class Sensor:
             elif self.depth < 0.3:
                 # Define kp for linear velocity
                 kp_linear = -0.25
-                linear_velocity = kp_linear*(self.depth)
+                linear_velocity = -0.25
             else:
                 # Define kp for linear velocity
                 kp_linear = 0.25
