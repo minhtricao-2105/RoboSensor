@@ -240,6 +240,16 @@ class Sensor:
             predict_current_translation = self.predict_current_value(trend_translation, self.last_translations)
             predict_current_rotation = self.predict_current_value(trend_rotation, self.last_rotations)
 
+            # Limit the size of the lists to the last 50 readings
+            if len(self.last_translations) > self.max_readings:
+                self.last_translations.pop(0)
+            if len(self.last_rotations) > self.max_readings:
+                self.last_rotations.pop(0)
+
+            # Update last known translation and rotation
+            self.last_translations.append(predict_current_translation)
+            self.last_rotations.append(predict_current_rotation)
+
             current_distance = math.sqrt(predict_current_translation[0][0][0]*predict_current_translation[0][0][0] + predict_current_translation[0][0][1]*predict_current_translation[0][0][1])
             current_angular = predict_current_rotation[0][0][0] #Get yaw value
 
