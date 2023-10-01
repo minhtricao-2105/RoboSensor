@@ -540,6 +540,11 @@ classdef OmcronBaseClass < handle
             % Animate the path:
             i=1;
             while i < steps
+                % check the cancel flag:
+                if app.cancelFlag == true
+                    break;
+                end
+
                 self.model.animate(qMatrix(i,:));
                 eeTr = self.model.fkine(qMatrix(i,:)).T;
 
@@ -576,7 +581,7 @@ classdef OmcronBaseClass < handle
                         break;
                     end
                 end
-
+                
                 % Update the data of the robot to the gui:
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();
@@ -598,10 +603,10 @@ classdef OmcronBaseClass < handle
 
         function rmrc(self, startPose, endPose, totalTime, totalSteps, humanObject, obstacleObject, app, object)
             
-            % Check whenever we want to move the object with the robot:
+            % --- Check whenever we want to move the object with the robot:
             moveObject = true;
             
-            % If there is no object input => No need to move the object
+            % --- If there is no object input => No need to move the object
             if nargin < 9
                 moveObject = false;
             else
@@ -610,72 +615,84 @@ classdef OmcronBaseClass < handle
                 objectEE = inv(eeTr)*object.baseTr;
             end
 
-            % Set up the initial parameters:
+            % --- Set up the initial parameters:
             t = totalTime;                              %<! Total Time of motion
             steps = totalSteps;                         %<! Number of steps
             deltaT = t/steps;                           %<! Small Angle Change
-            threshold = 0.2;                            %<! Threshhold value for manipulability
+            threshold = 0.045;                          %<! Threshhold value for manipulability
             waypoints = zeros(steps,3);                 %<! Waypoints matrix
 
-            % Allocate array data:
+            % --- Allocate array data:
             qMatrix = zeros(steps, self.model.n);      % Array for joint Angels:
 
-            % Set up trajectory:
+            % --- Set up trajectory:
             startPoint = startPose;
             endPoint = endPose;
-
+            
+            % --- Linear Interpolation between two points
             for i = 1:steps
                 t = (i - 1) / (steps - 1);  % Interpolation parameter [0, 1]
                 waypoints(i, :) = (1 - t) * startPoint + t * endPoint;
             end
-
-            % Solve joint angles to achieve first waypoint:
+            
+            % --- Get the initial Joint Angles:
             qMatrix(1,:) = self.model.getpos;
 
-            % Animate the first q
+            % --- Animate the first q
             self.model.animate(qMatrix(1,:));
 
-            % Track the trajectory with RMRC:
+            % --- Track the trajectory with RMRC:
+            % -- Create a index:
             i=1;
             
             while i < steps
-
-                % Get forward transformation at current joint state:
-                T = self.model.fkine(qMatrix(i,:)).T;
-
-                % Get Position Error from next waypoint:
-                deltaX = waypoints(i+1, :) - T(1:3,4)';
-
-                % Get the linear velocity:
-                linearVelocity = (1/deltaT)*deltaX;
-
-                % Get the angular velocity:
-                angularVelocity = [0,0,0];
-
-                % Calculate the end-effector velocity to reach next waypoint:
-                xDot = [linearVelocity'; angularVelocity'];
-
-                % Find the Jacobian Matrix at the current pose:
-                J = self.model.jacob0(qMatrix(i,:));
-
-                % Measure of Manipulability
-                mu = sqrt(det(J*J'));
-
-                % If manipulability is less than given threshold
-                if mu < threshold
-                    % Damping coefficient (example value)
-                    lambda = 0.01;
-
-                    % Apply Damped Least Squares pseudoinverse
-                    invJ = J'*inv(J*J'+lambda*eye(6));
-                else
-                    invJ = pinv(J);
+                
+                % -- Check if the flag is raised in the app:
+                if app.cancelFlag == true
+                    break;
                 end
 
-                % Solve velocities via RMRC:
-                qdot = invJ*xDot;
+                % -- Get forward transformation at current joint state:
+                T = self.model.fkine(qMatrix(i,:)).T;
 
-                % Consider the joint limit:
+                % -- Get Position Error from next waypoint:
+                deltaX = waypoints(i+1, :) - T(1:3,4)';
+
+                % -- Get the linear velocity:
+                linearVelocity = (1/deltaT)*deltaX;
+
+                % -- Get the angular velocity:
+                angularVelocity = [0,0,0];
+
+                % -- Calculate the end-effector velocity to reach next waypoint:
+                xDot = [linearVelocity'; angularVelocity'];
+
+                % -- Find the Jacobian Matrix at the current pose:
+                J = self.model.jacob0(qMatrix(i,:));
+
+                % -- Measure of Manipulability
+                mu = sqrt(det(J*J'));
+                
+                % -- Setup lamda_max:
+                lambda_max = 0.4;
+
+                % -- Setup damping factor:
+                lambda = 0;
+
+                % -- If manipulability is less than given threshold
+                if mu < threshold
+                    lambda = (1- (mu/threshold)^2)*lambda_max;
+                end
+                
+                % -- Determine the inverse of Jacobean:
+                invJ = J'*inv(J*J'+lambda*eye(6));
+
+                % -- Solve velocities via RMRC:
+                qdot = invJ*xDot;
+                
+                % --- CHECKING ALL THE CONDITION OF THE STEPS BEGIN HERE:
+
+                % -- 1. Checking the Joint Limit:
                 for j = 1:self.model.n
                     if qMatrix(i,j) + deltaT*qdot < self.model.qlim(j,1)
                         qdot = 0; % Stop the motor
@@ -683,33 +700,47 @@ classdef OmcronBaseClass < handle
                         qdot = 0; % Stop the motor
                     end
                 end
-
+                
                 % Update next joint state based on joint velocities:
                 qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot';
 
                 % Animate the path:
                 self.model.animate(qMatrix(i+1,:));
-                
+
                 % Get the endeffector pose:
                 eeTr = self.model.fkine(qMatrix(i+1,:)).T;
-                
+
                 % Animate the movement of the object:
                 if moveObject
                     transform = eeTr*objectEE;
                     object.moveObject(transform);
                 end
+
+                % -- 2. Checking the Ground Collision:
+                if self.GroundCollision(self.model.getpos) == true
+                    qdot = 0;
+                end
                 
-                % Check human intersect with workspace
+                % -- 3. Checking Human Enter the Workplace:
                 checkCollision = self.HumanCollisionCheck(humanObject);
                 
-                % Check stop 
+                % -- 4. Checking and Then Apply Avoid Collision Method:
+                if self.avoidArmCheck == true
+                    checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
+                    if checkObstacle == true
+                        self.obstacleAvoidance = true;
+                        break;
+                    end
+                end
+                
+                % -- 5. Checking E-Stop:
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
                     i = i;
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
                     app.ActivateSafetyMode;
-                    
+
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
                         app.ToggleLampLight();
@@ -718,16 +749,7 @@ classdef OmcronBaseClass < handle
                 else
                     i = i + 1;
                 end
-
-                % Check obstacle, then avoid collision
-                if self.avoidArmCheck == true
-                    checkObstacle = self.CheckRobotArmObstacle(obstacleObject);
-                    if checkObstacle == true
-                        self.obstacleAvoidance = true;
-                        break;
-                    end
-                end
-           
+                             
                 % Update the data of the robot to the gui:
                 app.UpdateJointStateData();
                 app.UpdateEndEffectorData();

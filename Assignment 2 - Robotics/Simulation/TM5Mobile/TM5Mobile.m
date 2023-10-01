@@ -121,7 +121,12 @@ classdef TM5Mobile < OmcronBaseClass
                     i = i + 1;
                     flagStop = false;
                 end
-
+                
+                % Check if the cancel flag is raised:
+ 
+                if app.cancelFlag == true
+                    break;
+                end
                 pause(0.05);
             end
             
