@@ -526,8 +526,10 @@ classdef Mission < handle
         end
 
         %% Homing everything
-        function HomeTM5(self, tm5Robot)
-            
+        function HomeTM5(self, tm5Robot, human, arm)
+            tm5Robot.MoveBase(0, 2.06, 0);
+            tm5Robot.MoveBase(-1.8, 0, 0);
+            tm5Robot.MoveBase(0,0,90);
         end
 
 
