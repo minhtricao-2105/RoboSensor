@@ -127,7 +127,7 @@ classdef Mission < handle
 
         end
 
-        %% Function move robot step 2:
+        %% Function move robot step 2: ADD AVOID COLLISION
         function FirstMoveBackAndFirstPick(self, tm5Robot, tm12Robot, human, arm, products)
 
             for k=2:6
