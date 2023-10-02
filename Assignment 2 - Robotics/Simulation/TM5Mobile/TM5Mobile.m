@@ -81,7 +81,8 @@ classdef TM5Mobile < OmcronBaseClass
             else
                 % Get the transformation between the EE and the object
                 eeTr = self.model.base.T;
-                for i=1:6
+                sizeOfProd = size(products);
+                for i=1:sizeOfProd(2)
                     objectEE = inv(eeTr)*products{i}.baseTr;
                     productsEE{i} = objectEE;
                 end
@@ -96,7 +97,8 @@ classdef TM5Mobile < OmcronBaseClass
 
                 eeTr = self.model.base.T;
                 if moveProduct
-                    for k=1:6
+                    sizeOfProd = size(products);
+                    for k=1:sizeOfProd(2)
                         transform = eeTr*productsEE{k};
                         products{k}.moveObject(transform);
                     end
@@ -131,6 +133,39 @@ classdef TM5Mobile < OmcronBaseClass
             end
             
         end
+
+        %% Function to test move base
+        function TestMoveBase(self,x,y,yaw,products)
+            moveProduct = true;
+            
+            productsEE = {};
+            % If there is no object input => No need to move the object
+            if nargin < 5
+                moveProduct = false;
+            else
+                % Get the transformation between the EE and the object
+                eeTr = self.model.base.T;
+                for i=1:6
+                    objectEE = inv(eeTr)*products{i}.baseTr;
+                    productsEE{i} = objectEE;
+                end
+            end
+
+            for i=1:50
+                self.model.base = self.model.base.T*transl(-x/50, -y/50, 0)*trotz(deg2rad(yaw)/50);
+                self.model.animate(self.model.getpos);
+
+                eeTr = self.model.base.T;
+                if moveProduct
+                    for k=1:6
+                        transform = eeTr*productsEE{k};
+                        products{k}.moveObject(transform);
+                    end
+                end
+                pause(0.05);
+            end
+        end
+
 
     end
 end
