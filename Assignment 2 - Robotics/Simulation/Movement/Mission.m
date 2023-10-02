@@ -223,7 +223,7 @@ classdef Mission < handle
                 newQTM12(1) = currentQTM12(1) + pi;
                 tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, products{k});
 
-                % Apply avoid collision:
+                % - Apply avoid collision for the TM12 robot if the light curtain fail:
                 if (tm12Robot.obstacleAvoidance == true)
                     endPose = tm12Robot.model.fkine(newQTM12).T;
                     endPoint = endPose(1:3,4)';
@@ -265,11 +265,16 @@ classdef Mission < handle
 
                 % - Generate Path for the TM5 to drop off the product:
                 baseTM5 = tm5Robot.model.base.T;
+
+                % If the product is index 2,3,4:
                 if (k == 2) || (k == 3) || (k == 4)
                     zProduct1 = baseTM5(3,4) + 0.2;
+
+                % If the product is index 5,6:
                 elseif (k == 5) || (k == 6)
                     zProduct1 = baseTM5(3,4) + 0.25;
                 end
+
                 desiredDropOffTM5 = [0.1, -0.1, zProduct1];
                 if (k == 2) || (k == 5)
                     desiredDropOffTM5 = [0.1, -0.1, zProduct1];
@@ -408,14 +413,14 @@ classdef Mission < handle
                 disp('Fixing');
             end
 
-            % --- VII. Move the TM12 upward after drooping the product:
+            % --- VII. Move the TM5 upward after drooping the product:
             % WayPoint6: Define start point and end point and use it for RMRC
             currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
             currentTM5Point = currentTM5Pose(1:3,4)';
             desiredTM5Point = desiredDropOff;
             desiredTM5Point(3) = desiredDropOff(3) + 0.3; % adjust the height
 
-            % Use RMRC to move the TM12 to upward and ready for next product
+            % Use RMRC to move the TM5 to upward and ready for next product
             tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
 
             % Apply avoid collision:
@@ -432,6 +437,8 @@ classdef Mission < handle
             % -------------- Sample path for deliver product -----------
 
             % --- I. Deliver red product location
+
+            % - Move the robot to the desired position to drop up the red product:
             tm5Robot.MoveBase(-0.75, -1.8, 0, human, self.mainAppHandle, products);
             tm5Robot.MoveBase(0, 0, -90, human, self.mainAppHandle, products);
             
@@ -449,88 +456,86 @@ classdef Mission < handle
                 elseif (i == 6)
                     k = 3;
                 end
-                % --- I. Adjust Q and move base 
-                tm5Robot.AnimatePath(tm5Robot.qHomePlace,50,human,arm,self.mainAppHandle);
 
+                % --- I. Adjust Q and move base a litlle bit to avoid collision:
+                tm5Robot.AnimatePath(tm5Robot.qHomePlace,50,human,arm,self.mainAppHandle);
+                
+                % -- Store the remain products after placing:
+                
+                % - If the first products are red colour => remains are blue, green
                 if (i == 3)
                     prod1 = products{5};
                     prod2 = products{2};
                     prod3 = products{6};
                     prod4 = products{3};
-
                     remainProds = {prod1, prod2, prod3, prod4};
 
+                    % Move base to avoid collision:
                     tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, remainProds);
+                
+                % - If the second products are blue => remains are green    
                 elseif (i == 5)
                     prod1 = products{6};
                     prod2 = products{3};
-
                     remainProds = {prod1, prod2};
-
+                    
+                    % Move base to avoid collision:
                     tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, remainProds);
                 end
                 
-                % --- II. Go to above position of red product (move without product)
+                % --- II. Waypoint 1: Go to above position of red product (move without product)
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 pickUpPose = products{k}.baseTr;
-    
                 currentTM5Point = currentTM5Pose(1:3,4)';
                 desiredTM5Point = pickUpPose(1:3,4)';
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
     
-                % Use RMRC to move the TM5 to the product
+                % Use RMRC to move the TM5 to the product ppsition:
                 tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
     
-                % --- III. Go to pick up red product (move without product)
+                % --- III. Waypoint 2: Go to pick up red product (move without product)
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 currentTM5Point = currentTM5Pose(1:3,4)';
-    
                 desiredTM5Point = pickUpPose(1:3,4)';
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.18;
     
                 % Use RMRC to move the TM5 to on top of the product
                 tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
     
-                % --- IV. Go back to above position of the red product (move product)
+                % --- IV. Waypoint 3: Go back to above position of the red product (move product)
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 currentTM5Point = currentTM5Pose(1:3,4)';
-                
                 desiredTM5Point = pickUpPose(1:3,4)';
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
     
                 % Use RMRC to move the TM5 with the product upward
                 tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, products{k});
-    
-                % --- V. Rotate the base by 180 degrees:
-                % newQ = tm5Robot.model.getpos();
-                % newQ(1) = newQ(1) - pi;
-                % tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{4});
-
+                
+                % Homing the robot before performing placing product:
                 homeQTM5 = tm5Robot.qHomePick;
                 tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, products{k});
     
-                % --- VI. Adjust the orientation of the product
+                % --- V. Waypoint 4: Adjust the orientation of the product
                 newQ = tm5Robot.model.getpos();
                 newQ(4) = newQ(4) + deg2rad(30);
                 tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{k});
     
-                % --- VII. Move to above desired location
+                % --- VI. Waypoint 5: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 currentTM5Point = currentTM5Pose(1:3,4)';
-    
                 baseTM5 = tm5Robot.model.base.T;
-                z = baseTM5(3,4) + 0.6;
+               
                 x = baseTM5(1,4) + 0.1;
                 y = baseTM5(2,4) - 0.626;
+                z = baseTM5(3,4) + 0.6;
                 desiredDropOff = [x, y, z];
     
                 % Use RMRC to place the product in above dropp off position
                 tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products{k});
     
-                % --- VIII. Move to above desired location
+                % --- VII. Waypoint 6: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 currentTM5Point = currentTM5Pose(1:3,4)';
-    
                 baseTM5 = tm5Robot.model.base.T;
                 z = baseTM5(3,4) + 0.35;
                 if (k == 1) || (k == 2) || (k == 3)
@@ -544,19 +549,20 @@ classdef Mission < handle
                 % Use RMRC to place the product in above dropp off position
                 tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products{k});
 
-                % --- IX. Move to above desired location
+                % --- VIII. Waypoint 7: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
                 currentTM5Point = currentTM5Pose(1:3,4)';
-    
                 baseTM5 = tm5Robot.model.base.T;
-                z = baseTM5(3,4) + 0.6;
+
                 x = baseTM5(1,4) + 0.1;
                 y = baseTM5(2,4) - 0.626;
+                z = baseTM5(3,4) + 0.6;
                 desiredDropOff = [x, y, z];
     
                 % Use RMRC to place the product in above dropp off position
                 tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle);
-
+                
+                % --- IX. Waypoint 8: Homing the robot after finish placing
                 homeQTM5 = tm5Robot.qHomePick;
                 tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
             end

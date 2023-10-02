@@ -29,6 +29,7 @@ for i=1:10
     PlaceObjectModified('laserLight.ply', baseTr * transl(1, -2.9, i*0.2));
 end
 
-
-
+%% -- Setup the Fire Extructer:
+PlaceObjectModified('fireExtinguisher.ply', baseTr * transl(0.8, -3.3, 0));
+PlaceObjectModified('fireExtinguisher.ply', baseTr * transl(2.2, -3.3, 0));
 end
