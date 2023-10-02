@@ -602,7 +602,7 @@ classdef OmcronBaseClass < handle
 
 
         function rmrc(self, startPose, endPose, totalTime, totalSteps, humanObject, obstacleObject, app, object)
-            
+            self.obstacleAvoidance = false;
             % --- Check whenever we want to move the object with the robot:
             moveObject = true;
             
