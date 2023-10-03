@@ -262,12 +262,10 @@ classdef OmcronBaseClass < handle
         end
 
         %% QuadraticDistance function
-        function [distances, conditions] = QuadraticDistance(self, points, centerPoint, radii)
+        function [distances, conditions] = QuadraticDistance(self, points, centerPoint, A)
 
             % Calculate the quadraticDistance:
-            distances = ((points(:,1)-centerPoint(1))/radii(1)).^2 ...
-                + ((points(:,2)-centerPoint(2))/radii(2)).^2 ...
-                + ((points(:,3)-centerPoint(3))/radii(3)).^2;
+            distances = (points - centerPoint)'*A*(points -centerPoint);
 
             % Check the conditions for each point:
             conditions = zeros(size(distances));
@@ -429,32 +427,34 @@ classdef OmcronBaseClass < handle
 
         %% CheckSelfCollision
         function isCollision = CheckSelfCollision(self)
-
-            % Get the ellipsoids for all links
-            linkEllipsoids = self.CreateEllipsoidLinks(false);
-
-            % Number of ellipsoids (equal to number of links)
-            numEllipsoids = length(linkEllipsoids);
+            
+            self.CreateEllipsoidLinks(true);
 
             % Loop over all pairs of ellipsoids to check for collision
-            for i = 1:numEllipsoids-2
-                for j = i+2:numEllipsoids
+            for i = 1:4
+                for j = i+2:6
 
                     % Get the center and radii of the first ellipsoid
-                    center1 = linkEllipsoids(i).center;
-                    radii1 = linkEllipsoids(i).radii;
+                    center1 = self.linkEllipsoid.center{i}';
+                    A = self.linkEllipsoid.A{i};
 
                     % Extract the X, Y, and Z coordinates of the points on the second ellipsoid
-                    points2 = [linkEllipsoids(j).X(:), linkEllipsoids(j).Y(:), linkEllipsoids(j).Z(:)];
+                    points2 = [self.linkEllipsoid.X{j}(:), self.linkEllipsoid.Y{j}(:), self.linkEllipsoid.Z{j}(:)]';
 
                     % Check if any point from ellipsoid j is inside ellipsoid i
-                    [~, conditions] = self.QuadraticDistance(points2, center1, radii1);
+                    [~, conditions] = self.QuadraticDistance(points2, center1, A);
 
                     % Count the number of points that are inside the ellipsoid
-                    collisionPoints = sum(conditions == 0)
+                    count = 0;
+
+                    for k=1:size(conditions)
+                        if conditions(k) == 0
+                            count = count + 1;
+                        end
+                    end
 
                     % If any point has a condition of 0, it indicates a collision
-                    if collisionPoints > 20
+                    if count > 5
                         isCollision = true;
                         return;
                     end

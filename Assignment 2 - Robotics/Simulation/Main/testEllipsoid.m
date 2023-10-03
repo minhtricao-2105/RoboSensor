@@ -3,19 +3,21 @@ clc;
 clear all;
 close all;
 
-% Add path:
-addpath('../TM5Mobile');
-addpath('../TM5');
-addpath('../OmcronBaseClass');
-
-% qHome = [-173, -97.2, -170, -90, 90, 0]*pi/180;
-qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
-workspace = [-1.5 1.5, -1.5, 1.5, 0, 2];
+% qHome = [-173, -97.2, -170, -90, 90, 0]*pi/180];
+qHome = [0, -pi/2, -2.705, -1.884, pi/2, 0];
+workspace = [-1 1, -1, 1, 0, 1];
 
 % Setup the robot:
-ttRobotTM5Mobile = TM5Mobile(transl(0,0,0.8)*trotz(pi), qHome, workspace);
+ttRobotTM5Mobile = TM12(eye(4), qHome, workspace);
 
 hold on 
 % Call the ellipsoid function:
+qDesired = qHome;
+qDesired(1) = qDesired(1) + pi/2;
+path = jtraj(qHome, qDesired, 50);
 
-ttRobotTM5Mobile.CreateEllipsoidLinks(true)
+for i = 1:length(path)
+    ttRobotTM5Mobile.model.animate(path(i,:));
+    ttRobotTM5Mobile.CheckSelfCollision();
+    pause(0.1);
+end
