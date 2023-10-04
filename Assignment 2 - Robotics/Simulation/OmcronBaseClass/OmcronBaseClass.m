@@ -585,6 +585,8 @@ classdef OmcronBaseClass < handle
                         app.ToggleLampLight(1);
                     elseif checkSonar == true
                         app.ToggleLampLight(2);
+                    elseif  checkButton == true
+                        app.ToggleLampLight(3);
                     end
                     
                 else
@@ -770,6 +772,8 @@ classdef OmcronBaseClass < handle
                         app.ToggleLampLight(1);
                     elseif checkSonar == true
                         app.ToggleLampLight(2);
+                    elseif  checkButton == true
+                        app.ToggleLampLight(3);
                     end
 
                 else

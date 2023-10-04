@@ -185,7 +185,7 @@ classdef Mission < handle
 
                 % --- Move TM5 approach the table
                 if(k == 2)
-                    tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle);
+                    tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
                 end
 
                 % --- Homing the TM5 Robot before picking the brick:
@@ -472,8 +472,8 @@ classdef Mission < handle
             % --- I. Deliver red product location
 
             % - Move the robot to the desired position to drop up the red product:
-            tm5Robot.MoveBase(-0.75, -1.8, 0, human, self.mainAppHandle, products);
-            tm5Robot.MoveBase(0, 0, -90, human, self.mainAppHandle, products);
+            tm5Robot.MoveBase(-0.75, -1.8, 0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
+            tm5Robot.MoveBase(0, 0, -90, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
             
             for i=1:6
                 if (i == 1)
@@ -504,7 +504,7 @@ classdef Mission < handle
                     remainProds = {prod1, prod2, prod3, prod4};
 
                     % Move base to avoid collision:
-                    tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, remainProds);
+                    tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, remainProds);
                 
                 % - If the second products are blue => remains are green    
                 elseif (i == 5)
@@ -513,7 +513,7 @@ classdef Mission < handle
                     remainProds = {prod1, prod2};
                     
                     % Move base to avoid collision:
-                    tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, remainProds);
+                    tm5Robot.MoveBase(-0.05, -1.03, 0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, remainProds);
                 end
                 
                 % --- II. Waypoint 1: Go to above position of red product (move without product)
@@ -606,9 +606,9 @@ classdef Mission < handle
         function HomeTM5(self, tm5Robot, human, arm)
             homeQTM5 = tm5Robot.qHomePick;
             tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
-            tm5Robot.MoveBase(0, 2.06, 0, human, self.mainAppHandle);
-            tm5Robot.MoveBase(-1.8, 0, 0, human, self.mainAppHandle);
-            tm5Robot.MoveBase(0,0,90, human, self.mainAppHandle);
+            tm5Robot.MoveBase(0, 2.06, 0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
+            tm5Robot.MoveBase(-1.8, 0, 0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
+            tm5Robot.MoveBase(0,0,90, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
         end
 
 
@@ -648,7 +648,7 @@ classdef Mission < handle
 
         %% Function
         function testMain(self, tm5Robot, tm12Robot, human, arm)
-            tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle);
+            tm5Robot.MoveBase(0.75,0,0, human, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
             startPoint = startPose(1:3,4)';
