@@ -115,7 +115,7 @@ classdef TM5Mobile < OmcronBaseClass
                     
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
-                        app.ToggleLampLight();
+                        app.ToggleLampLight(1);
                     end
                     
                     flagStop = true;
