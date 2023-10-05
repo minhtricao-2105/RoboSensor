@@ -169,13 +169,6 @@ class Sensor:
             else:
                 durationLinear = 0
 
-            # if self.rotation is not None:
-            #     lastRotation = self.rotation[0][0][2]
-            #     durationRotate = lastRotation/1.82
-            #     print(lastRotation)
-            # else:
-            #     durationRotate = 0
-
             durationRotate = math.asin(abs(self.center_x)/self.depth)/1.82
 
             #Go to the position first

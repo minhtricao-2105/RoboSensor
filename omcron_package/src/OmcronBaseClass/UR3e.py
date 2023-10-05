@@ -179,18 +179,29 @@ class UR3e:
         
         # Perform RMRC:
         for i in range(num_waypoints - 1):
-            xdot = (waypoints[i + 1, :] - waypoints[i, :]) / deltaT
+            # Get the forward transformation at current joint states:
+            T = self.model.fkine(q_matrix[i,:]).A
+
+            # Get Position Error:
+            deltaX = waypoints[i+1, :] - T[0:3, 3]
+
+            # Get the Linear Velocity:
+            linearVelocity = (1/deltaT) * deltaX
+
+            # Get the angular velocity:
+            angularVelocity = np.array([0, 0, 0])
+
+            # Calculate the end-effector velocity to reach next waypoint:
+            xDot = np.concatenate((linearVelocity, angularVelocity), axis=None)
+
+            # Find the Jacobian Matrix at the current pose:
             J = self.model.jacob0(q_matrix[i, :])
-            Jv = J[0:3, :]
 
-            if lock_ee == True:
-                orientationDiff = self.calculate_ori_diff(desired_orientation, q_matrix[i, :])
-                combinedVelocity = np.concatenate((xdot, orientationDiff), axis=None)
-                qdot = np.linalg.pinv(J) @ combinedVelocity 
-            else:
-                qdot = np.linalg.pinv(Jv) @ xdot
+            # Solve velocitites by using pinv:
+            q_dot = np.linalg.pinv(J) @ xDot
 
-            q_matrix[i + 1, :] = q_matrix[i, :] + deltaT * qdot
+            # Update next Joint State:
+            q_matrix[i+1, :] = q_matrix[i, :] + deltaT*q_dot
 
         # Update to robot.q
         self.model.q = q_matrix[-1, :]

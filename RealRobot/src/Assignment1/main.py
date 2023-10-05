@@ -43,7 +43,7 @@ robot.set_up_moveIt(0.1)
 robot.arm.go(home_position)
 
 # Open the Gripper:
-# pub.publish(gripper.OpenGripper())
+# pub.publish(gripper.OpenGripper())       
 
 # Perform the pick and place:
 for i in range(len(brick_locations)):
