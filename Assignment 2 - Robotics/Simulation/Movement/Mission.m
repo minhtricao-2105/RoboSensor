@@ -2,6 +2,15 @@ classdef Mission < handle
 
     properties
         mainAppHandle = [];
+
+        % Create an Arduino Object inside this class:
+        arduinoObj;
+
+        % Create an Ultrasonic Object inside this class:
+        ultrasonicObj;
+
+        % Create an button pin for this class:
+        buttonPin;
     end
 
     methods
@@ -9,6 +18,30 @@ classdef Mission < handle
         %% Constructor of this class:
         function self = Mission(mainAppHandle)
             self.mainAppHandle = mainAppHandle;
+
+            % Define the button pin
+            self.buttonPin = 'D7';
+
+            try
+                % Attempt to create an Arduino Object inside this class
+                self.arduinoObj = arduino();
+
+                % Attempt to create an Ultrasonic Object inside this class
+                self.ultrasonicObj = ultrasonic(self.arduinoObj, 'D9', 'D10');
+
+                % Display a success message
+                disp('Arduino and Ultrasonic sensor connected successfully!');
+
+            catch ME
+                % Handle errors in connecting to Arduino or Ultrasonic sensor
+
+                % Display an error message
+                warning('Failed to connect to Arduino or Ultrasonic sensor!');
+
+                % Assign empty arrays to objects to avoid undefined object error
+                self.arduinoObj = [];
+                self.ultrasonicObj = [];
+            end
         end
 
         %% Move Robot Function Step 1: TM12 move first product
@@ -26,7 +59,7 @@ classdef Mission < handle
             desiredTM12Point(3) = desiredTM12Point(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 to on top of the product
-            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -42,7 +75,7 @@ classdef Mission < handle
             desiredTM12Point(3) = desiredTM12Point(3) + 0.05; % adjust the height
 
             % Use RMRC to move the TM12 to the product
-            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -58,7 +91,7 @@ classdef Mission < handle
             desiredTM12Point(3) = desiredTM12Point(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 with product upward
-            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -69,7 +102,7 @@ classdef Mission < handle
             % --- IV. Rotate the base by 180 degrees (move with product)
             newQ = tm12Robot.model.getpos();
             newQ(1) = newQ(1) + pi;
-            tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products);
+            tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle, self.arduinoObj, self.ultrasonicObj,products);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -87,7 +120,7 @@ classdef Mission < handle
             desiredDropOff = [1.25, 0, z];
 
             % Use RMRC to place the product in above dropp off position
-            tm12Robot.rmrc(currentTM12Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm12Robot.rmrc(currentTM12Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -104,7 +137,7 @@ classdef Mission < handle
             desiredDropOff = [1.25, 0, z];
 
             % Use RMRC to place the product in above dropp off position
-            tm12Robot.rmrc(currentTM12Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm12Robot.rmrc(currentTM12Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -121,7 +154,7 @@ classdef Mission < handle
             desiredTM12Point(3) = desiredDropOff(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM12 to upward and ready for next product
-            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm12Robot.rmrc(currentTM12Point, desiredTM12Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm12Robot.obstacleAvoidance == true)
@@ -140,7 +173,7 @@ classdef Mission < handle
                 % --- Rotate the base of the TM12 by 180 degree (move without product)
                 newQ = tm12Robot.model.getpos();
                 newQ(1) = newQ(1) - pi;
-                tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle);
+                tm12Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
                 
                 % Apply avoid collision:
                 if (tm12Robot.obstacleAvoidance == true)
@@ -157,7 +190,7 @@ classdef Mission < handle
 
                 % --- Homing the TM5 Robot before picking the brick:
                 homeQTM5 = tm5Robot.qHomePick;
-                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
                 % --- I. Generate path for both TM12 and TM5 to move on top of the product 2 and 1 (move without product)
                 % WayPoint 1: On Top of Product Picking:
@@ -215,13 +248,13 @@ classdef Mission < handle
                 currentQTM5 = tm5Robot.model.getpos();
                 newQTM5 = currentQTM5;
                 newQTM5(1) = currentQTM5(1) - pi;
-                tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, products{k-1});
+                tm5Robot.AnimatePath(newQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k-1});
 
                 % - Generate Path and Rotate the TM12
                 currentQTM12 = tm12Robot.model.getpos();
                 newQTM12 = currentQTM12;
                 newQTM12(1) = currentQTM12(1) + pi;
-                tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, products{k});
+                tm12Robot.AnimatePath(newQTM12, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
 
                 % - Apply avoid collision for the TM12 robot if the light curtain fail:
                 if (tm12Robot.obstacleAvoidance == true)
@@ -312,11 +345,11 @@ classdef Mission < handle
         function PickLastProduct(self, tm5Robot, tm12Robot, human, arm, products)
             % -------------- Sample path for last product -----------
             tm12qHome = [0, -pi/2, -pi/2, -pi/2, pi/2, 0];
-            tm12Robot.AnimatePath(tm12qHome, 50, human, arm, self.mainAppHandle);
+            tm12Robot.AnimatePath(tm12qHome, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % --- Homing the TM5 Robot before picking the brick:
             homeQTM5 = tm5Robot.qHomePick;
-            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
             
             % --- I. Get on top of the last product (move without product)
             % WayPoint1: Define start point and end point and use it for RMRC
@@ -328,7 +361,7 @@ classdef Mission < handle
             desiredTM5Point(3) = desiredTM5Point(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM5 to on top of the product
-            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -344,7 +377,7 @@ classdef Mission < handle
             desiredTM5Point(3) = desiredTM5Point(3) + 0.18; % adjust the height
 
             % Use RMRC to move the TM12 to the product
-            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -360,7 +393,7 @@ classdef Mission < handle
             desiredTM5Point(3) = desiredTM5Point(3) + 0.5; % adjust the height
 
             % Use RMRC to move the TM12 with product upward
-            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -371,7 +404,7 @@ classdef Mission < handle
             % --- IV. Rotate the base by 180 degrees (move with product)
             newQ = tm5Robot.model.getpos();
             newQ(1) = newQ(1) - pi;
-            tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products);
+            tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle, self.arduinoObj, self.ultrasonicObj,products);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -388,7 +421,7 @@ classdef Mission < handle
             desiredDropOff = [0.32, 0, z];
 
             % Use RMRC to place the product in above dropp off position
-            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -405,7 +438,7 @@ classdef Mission < handle
             desiredDropOff = [0.32, 0, z];
 
             % Use RMRC to place the product in above dropp off position
-            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products);
+            tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -421,7 +454,7 @@ classdef Mission < handle
             desiredTM5Point(3) = desiredDropOff(3) + 0.3; % adjust the height
 
             % Use RMRC to move the TM5 to upward and ready for next product
-            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             % Apply avoid collision:
             if (tm5Robot.obstacleAvoidance == true)
@@ -458,7 +491,7 @@ classdef Mission < handle
                 end
 
                 % --- I. Adjust Q and move base a litlle bit to avoid collision:
-                tm5Robot.AnimatePath(tm5Robot.qHomePlace,50,human,arm,self.mainAppHandle);
+                tm5Robot.AnimatePath(tm5Robot.qHomePlace,50,human,arm,self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
                 
                 % -- Store the remain products after placing:
                 
@@ -491,7 +524,7 @@ classdef Mission < handle
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
     
                 % Use RMRC to move the TM5 to the product ppsition:
-                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
     
                 % --- III. Waypoint 2: Go to pick up red product (move without product)
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
@@ -500,7 +533,7 @@ classdef Mission < handle
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.18;
     
                 % Use RMRC to move the TM5 to on top of the product
-                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle);
+                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
     
                 % --- IV. Waypoint 3: Go back to above position of the red product (move product)
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
@@ -509,16 +542,16 @@ classdef Mission < handle
                 desiredTM5Point(3) = desiredTM5Point(3) + 0.3;
     
                 % Use RMRC to move the TM5 with the product upward
-                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, products{k});
+                tm5Robot.rmrc(currentTM5Point, desiredTM5Point, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
                 
                 % Homing the robot before performing placing product:
                 homeQTM5 = tm5Robot.qHomePick;
-                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, products{k});
+                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
     
                 % --- V. Waypoint 4: Adjust the orientation of the product
                 newQ = tm5Robot.model.getpos();
                 newQ(4) = newQ(4) + deg2rad(30);
-                tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle,products{k});
+                tm5Robot.AnimatePath(newQ,50,human,arm,self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
     
                 % --- VI. Waypoint 5: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
@@ -531,7 +564,7 @@ classdef Mission < handle
                 desiredDropOff = [x, y, z];
     
                 % Use RMRC to place the product in above dropp off position
-                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products{k});
+                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
     
                 % --- VII. Waypoint 6: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
@@ -547,7 +580,7 @@ classdef Mission < handle
                 desiredDropOff = [x, y, z];
     
                 % Use RMRC to place the product in above dropp off position
-                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, products{k});
+                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{k});
 
                 % --- VIII. Waypoint 7: Move to above desired location
                 currentTM5Pose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
@@ -560,11 +593,11 @@ classdef Mission < handle
                 desiredDropOff = [x, y, z];
     
                 % Use RMRC to place the product in above dropp off position
-                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle);
+                tm5Robot.rmrc(currentTM5Point, desiredDropOff, 0.25, 40, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
                 
                 % --- IX. Waypoint 8: Homing the robot after finish placing
                 homeQTM5 = tm5Robot.qHomePick;
-                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+                tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
             end
             % -------------- End of path ---------------
         end
@@ -572,7 +605,7 @@ classdef Mission < handle
         %% Homing everything
         function HomeTM5(self, tm5Robot, human, arm)
             homeQTM5 = tm5Robot.qHomePick;
-            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle);
+            tm5Robot.AnimatePath(homeQTM5, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
             tm5Robot.MoveBase(0, 2.06, 0, human, self.mainAppHandle);
             tm5Robot.MoveBase(-1.8, 0, 0, human, self.mainAppHandle);
             tm5Robot.MoveBase(0,0,90, human, self.mainAppHandle);
@@ -596,18 +629,18 @@ classdef Mission < handle
             startPose = startPose(1:3,4)';
             endPoseTemp = endPoseTemp(1:3,4)';
             if moveObject
-                robot.rmrc(startPose, endPoseTemp, 2, 10, human, arm, app, product);
+                robot.rmrc(startPose, endPoseTemp, 2, 10, human, arm, app, self.arduinoObj, self.ultrasonicObj, product);
             else
-                robot.rmrc(startPose, endPoseTemp, 2, 10, human, arm, app);
+                robot.rmrc(startPose, endPoseTemp, 2, 10, human, arm, app, self.arduinoObj, self.ultrasonicObj);
             end
 
             % Move to disired pose after moving up
             startPose = robot.model.fkine(robot.model.getpos()).T;
             startPose = startPose(1:3,4)';
             if moveObject
-                robot.rmrc(startPose, endPose, 2, 50, human, arm, app, product);
+                robot.rmrc(startPose, endPose, 2, 50, human, arm, app, self.arduinoObj, self.ultrasonicObj, product);
             else
-                robot.rmrc(startPose, endPose, 2, 50, human, arm, app);
+                robot.rmrc(startPose, endPose, 2, 50, human, arm, app, self.arduinoObj, self.ultrasonicObj);
             end
             robot.avoidArmCheck = true;
 
@@ -620,17 +653,17 @@ classdef Mission < handle
             startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
             startPoint = startPose(1:3,4)';
             desiredDropOffTM5 = [1.25, 0, 0.95];
-            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
             startPoint = startPose(1:3,4)';
             desiredDropOffTM5 = [1.25, 0, 1.25];
-            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             currentQ = tm5Robot.model.getpos();
             newQ = currentQ;
             newQ(1) = currentQ(1) - pi;
-            tm5Robot.AnimatePath(newQ, 50, human, arm, self.mainAppHandle);
+            tm5Robot.AnimatePath(newQ, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
             startPose = tm5Robot.model.fkine(tm5Robot.model.getpos).T;
             startPoint = startPose(1:3,4)';
@@ -638,7 +671,7 @@ classdef Mission < handle
             zProduct1 = baseTM5(3,4) + 0.1;
             desiredDropOffTM5 = startPoint;
             desiredDropOffTM5(3) = zProduct1;
-            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle);
+            tm5Robot.rmrc(startPoint, desiredDropOffTM5, 2, 50, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
 
         end
 
@@ -696,11 +729,11 @@ classdef Mission < handle
 
                 % - Perform RMRC:
                 if moveProduct == false
-                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, 0.1, 2, human, arm, self.mainAppHandle);
-                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, 0.1, 2, human, arm, self.mainAppHandle);
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, 0.1, 2, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, 0.1, 2, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj);
                 else
-                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, 0.1, 2, human, arm, self.mainAppHandle, products{index});
-                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, 0.1, 2, human, arm, self.mainAppHandle, products{index-1});
+                    tm12Robot.rmrc(startPoseTM12, endPoseTM12, 0.1, 2, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{index});
+                    tm5Robot.rmrc(startPoseTM5, endPoseTM5, 0.1, 2, human, arm, self.mainAppHandle, self.arduinoObj, self.ultrasonicObj, products{index-1});
                 end
 
             end

@@ -67,7 +67,7 @@ classdef TM5Mobile < OmcronBaseClass
         end
 
         %% Move base function
-        function MoveBase(self, x, y, yaw, human, app, products)
+        function MoveBase(self, x, y, yaw, human, app, arduino, ultrasonic, products)
             % flag stop
             flagStop = false;
 
@@ -76,7 +76,7 @@ classdef TM5Mobile < OmcronBaseClass
             
             productsEE = {};
             % If there is no object input => No need to move the object
-            if nargin < 7
+            if nargin < 9
                 moveProduct = false;
             else
                 % Get the transformation between the EE and the object
@@ -106,6 +106,10 @@ classdef TM5Mobile < OmcronBaseClass
                 
                 checkCollision = self.HumanCollisionCheck(human);
 
+                checkButton = self.ButtonCheck(arduino);
+
+                checkSonar = self.SonarCheck(ultrasonic);
+
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
                     i = i;
                     disp("EMERGENCY STOP!");
@@ -116,6 +120,8 @@ classdef TM5Mobile < OmcronBaseClass
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
                         app.ToggleLampLight(1);
+                    elseif checkSonar == true
+                        app.ToggleLampLight(2);
                     end
                     
                     flagStop = true;

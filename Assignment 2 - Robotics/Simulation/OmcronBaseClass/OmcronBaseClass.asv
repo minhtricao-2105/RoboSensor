@@ -32,14 +32,6 @@ classdef OmcronBaseClass < handle
         % Check AvoidCollision
         avoidArmCheck = true;
 
-        % Create an Arduino Object inside this class:
-        arduinoObj = arduino();
-
-        % Create an Ultrasonic Object inside this class:
-        ultrasonicObj = ultrasonic(arduinoObj, 'D9', 'D10');
-
-        % Create an button pin for this class:
-        buttonPin = 'D7';
 
     end
 
@@ -62,7 +54,7 @@ classdef OmcronBaseClass < handle
                 self.name = ['RobotBaseClass',datestr(now,'yyyymmddTHHMMSSFFF')];
                 warning(['Please include a variable called plyFileNameStem in your inherreting class. For now the robot is named: ',self.name])
             end
-
+            
         end
 
         %% CountTiledFloorSurfaces
@@ -534,13 +526,12 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, newQ, steps, humanObject, obstacleObject, app, object)
-
+        function AnimatePath(self, newQ, steps, humanObject, obstacleObject, app, arduino, ultrasonic, object)
             % Setup the initial parameter:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 7
+            if nargin < 9
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
@@ -574,20 +565,28 @@ classdef OmcronBaseClass < handle
 
                 % Check human intersect with workspace
                 checkCollision = self.HumanCollisionCheck(humanObject);
+                
+                % Checking E-stop Arduino:
+                checkButton = self.ButtonCheck(arduino);
 
-                % Check stop 
-                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
+                % Checking Sonar Arduino:
+                checkSonar = self.SonarCheck(ultrasonic);
+
+                % Check stop
+                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
                     i = i;
                     disp("EMERGENCY STOP!");
 
                     % Turn on the Switch Button
                     app.ActivateSafetyMode;
-                    
+
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
-                        app.ToggleLampLight();
+                        app.ToggleLampLight(1);
+                    elseif checkSonar == true
+                        app.ToggleLampLight(2);
                     end
-
+                    
                 else
                     i = i + 1;
                 end
@@ -752,8 +751,14 @@ classdef OmcronBaseClass < handle
                     end
                 end
                 
-                % -- 5. Checking E-Stop:
-                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding') || checkCollision == true)
+                % -- 5. Checking E-stop Arduino:
+                checkButton = self.ButtonCheck();
+
+                % -- 6. Chcking Sonar Arduino:
+                checkSonar = self.SonarCheck();
+
+                % -- 7. Checking E-Stop in the GUI:
+                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
                     i = i;
                     disp("EMERGENCY STOP!");
 
@@ -762,7 +767,9 @@ classdef OmcronBaseClass < handle
 
                     % Toggle the Lamp for Warning in the app:
                     if checkCollision == true
-                        app.ToggleLampLight();
+                        app.ToggleLampLight(1);
+                    elseif checkSonar == true
+                        app.ToggleLampLight(2);
                     end
 
                 else
@@ -838,16 +845,24 @@ classdef OmcronBaseClass < handle
         
         %% buttonCheck function:
         % This function is used to check whenever the e-stop button is pressed or not
-        function check = ButtonCheck(self)
-            
-            % Read the signal of the button:
-            buttonState = readDigitalPin(self.arduinoObj, self.buttonPin);
+        function check = ButtonCheck(self, arduino)
+            try
+                % Read the signal of the button:
+                buttonState = readDigitalPin(arduino, 'D7');
 
-            % Check the button State:
-            if buttonState == 1
-                check = true;
-                self.robotState = 'stop';
-            else
+                % Check the button State:
+                if buttonState == 1
+                    check = true;
+                    self.robotState = 'stop';
+                else
+                    check = false;
+                end
+
+            catch ME
+                % Handle errors in button check
+                warning('Failed to check the button state!');
+
+                % Assign a default value to check to avoid undefined variable error
                 check = false;
             end
         end
@@ -855,14 +870,26 @@ classdef OmcronBaseClass < handle
         %% SonarCheck function:
         % This function is used to determine the distance of the sonar to
         % trigger the safety mode of the system:
-        function check = SonarCheck(self)
-            
-            % Using the toolbox to get the distance of the Sonar:
-            distance = self.ultrasonicObj.readDistance;
-            
-            % Check the distance:
-            
+        function check = SonarCheck(self, ultrasonic)
+            try
+                % Using the toolbox to get the distance of the Sonar:
+                distance = ultrasonic.readDistance;
 
+                % Check the distance:
+                if distance < 0.1
+                    check = true;
+                    self.robotState = 'stop';
+                else
+                    check = false;
+                end
+
+            catch ME
+                % Handle errors in sonar check
+                warning('Failed to check the sonar distance!');
+
+                % Assign a default value to check to avoid undefined variable error
+                check = false;
+            end
         end
     end
 end

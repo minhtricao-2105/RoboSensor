@@ -32,14 +32,6 @@ classdef OmcronBaseClass < handle
         % Check AvoidCollision
         avoidArmCheck = true;
 
-        % Create an Arduino Object inside this class:
-        arduinoObj;
-
-        % Create an Ultrasonic Object inside this class:
-        ultrasonicObj;
-
-        % Create an button pin for this class:
-        buttonPin;
 
     end
 
@@ -63,29 +55,6 @@ classdef OmcronBaseClass < handle
                 warning(['Please include a variable called plyFileNameStem in your inherreting class. For now the robot is named: ',self.name])
             end
             
-            % Define the button pin
-            self.buttonPin = 'D7';
-
-            try
-                % Attempt to create an Arduino Object inside this class
-                self.arduinoObj = arduino();
-
-                % Attempt to create an Ultrasonic Object inside this class
-                self.ultrasonicObj = ultrasonic(self.arduinoObj, 'D9', 'D10');
-
-                % Display a success message
-                disp('Arduino and Ultrasonic sensor connected successfully!');
-
-            catch ME
-                % Handle errors in connecting to Arduino or Ultrasonic sensor
-
-                % Display an error message
-                warning('Failed to connect to Arduino or Ultrasonic sensor!');
-
-                % Assign empty arrays to objects to avoid undefined object error
-                self.arduinoObj = [];
-                self.ultrasonicObj = [];
-            end
         end
 
         %% CountTiledFloorSurfaces
@@ -557,13 +526,12 @@ classdef OmcronBaseClass < handle
         end
         
         %% AnimatePath
-        function AnimatePath(self, newQ, steps, humanObject, obstacleObject, app, object)
-
+        function AnimatePath(self, newQ, steps, humanObject, obstacleObject, app, arduino, ultrasonic, object)
             % Setup the initial parameter:
             moveObject = true;
             
             % If there is no object input => No need to move the object
-            if nargin < 7
+            if nargin < 9
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
@@ -599,10 +567,10 @@ classdef OmcronBaseClass < handle
                 checkCollision = self.HumanCollisionCheck(humanObject);
                 
                 % Checking E-stop Arduino:
-                checkButton = self.ButtonCheck();
+                checkButton = self.ButtonCheck(arduino);
 
                 % Checking Sonar Arduino:
-                checkSonar = self.SonarCheck();
+                checkSonar = self.SonarCheck(ultrasonic);
 
                 % Check stop
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
@@ -651,13 +619,13 @@ classdef OmcronBaseClass < handle
         % Cartesian plane.
 
 
-        function rmrc(self, startPose, endPose, totalTime, totalSteps, humanObject, obstacleObject, app, object)
+        function rmrc(self, startPose, endPose, totalTime, totalSteps, humanObject, obstacleObject, app, arduino, ultrasonic, object)
             self.obstacleAvoidance = false;
             % --- Check whenever we want to move the object with the robot:
             moveObject = true;
             
             % --- If there is no object input => No need to move the object
-            if nargin < 9
+            if nargin < 11
                 moveObject = false;
             else
                 % Get the transformation between the EE and the object
@@ -784,10 +752,10 @@ classdef OmcronBaseClass < handle
                 end
                 
                 % -- 5. Checking E-stop Arduino:
-                checkButton = self.ButtonCheck();
+                checkButton = self.ButtonCheck(arduino);
 
                 % -- 6. Chcking Sonar Arduino:
-                checkSonar = self.SonarCheck();
+                checkSonar = self.SonarCheck(ultrasonic);
 
                 % -- 7. Checking E-Stop in the GUI:
                 if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
@@ -877,10 +845,10 @@ classdef OmcronBaseClass < handle
         
         %% buttonCheck function:
         % This function is used to check whenever the e-stop button is pressed or not
-        function check = ButtonCheck(self)
+        function check = ButtonCheck(self, arduino)
             try
                 % Read the signal of the button:
-                buttonState = readDigitalPin(self.arduinoObj, self.buttonPin);
+                buttonState = readDigitalPin(arduino, 'D7');
 
                 % Check the button State:
                 if buttonState == 1
@@ -902,10 +870,10 @@ classdef OmcronBaseClass < handle
         %% SonarCheck function:
         % This function is used to determine the distance of the sonar to
         % trigger the safety mode of the system:
-        function check = SonarCheck(self)
+        function check = SonarCheck(self, ultrasonic)
             try
                 % Using the toolbox to get the distance of the Sonar:
-                distance = self.ultrasonicObj.readDistance;
+                distance = ultrasonic.readDistance;
 
                 % Check the distance:
                 if distance < 0.1
