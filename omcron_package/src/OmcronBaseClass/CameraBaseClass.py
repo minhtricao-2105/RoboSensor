@@ -54,9 +54,9 @@ class Camera:
     def project_2D_to_3D(self, u, v, depth):
 
         # Extract intrinstic parameters:
-        fx, fy = self.K[0, 0], self.K[1, 1]
-        cx, cy = self.K[0, 2], self.K[1, 2]
-        
+        fx, fy = 619.7423706054688, 620.3488159179688
+        cx, cy = 318.9226379394531, 242.47071838378906
+            
         # Calculate the 3D point:
         x = (u - cx) * depth / fx
         y = (v - cy) * depth / fy
@@ -87,7 +87,11 @@ class Camera:
         # -- Define the lower and upper bounds of the blue color
         lower_blue = np.array([100, 50, 50])
         upper_blue = np.array([140, 255, 255])
-        mask = cv.inRange(hsv, lower_blue, upper_blue)
+
+        lower_red1 = np.array([0, 50, 50])
+        upper_red1 = np.array([10, 255, 255])
+
+        mask = cv.inRange(hsv, lower_red1, upper_red1)
 
         # -- Find contours:
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
