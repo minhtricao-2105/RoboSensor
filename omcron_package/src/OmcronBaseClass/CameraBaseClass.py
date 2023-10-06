@@ -29,7 +29,6 @@ class Camera:
     def rgb_callback(self, msg):
         try:
             self.latest_rgb = msg
-            self.detect_object()
         except Exception as e:
             print(e)
             
@@ -66,59 +65,50 @@ class Camera:
 
         return P_camera
     
+    # ReSubscribe to the topics:
+    def re_subscribe(self):
+        self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
+        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
+
     # Detect object
-    def detect_object(self):
-        if self.latest_rgb is None:
+    def detect_blue_object(self):
+        if self.latest_rgb is None or self.latest_depth is None:
             print('No RGB or Depth Image image received')
             return None
         
-        # Convert the image to OpenCV format:
+        # -- Convert the image to OpenCV format:
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
-        depth_image = bridge.imgmsg_to_cv2(self.latest_depth, desired_encoding="32FC1")
+        cv_depth = bridge.imgmsg_to_cv2(self.latest_depth, "passthrough")
 
-        # Convert the image to HSV format:
+        # -- Convert the image to HSV format:
         hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
-        # Define the lower and upper bounds of the blue color
+        # -- Define the lower and upper bounds of the blue color
         lower_blue = np.array([100, 50, 50])
         upper_blue = np.array([140, 255, 255])
         mask = cv.inRange(hsv, lower_blue, upper_blue)
 
-        # Find contours:
+        # -- Find contours:
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-        depth_at_centroid = None
+        if contours is not None:
+            self.rgb_subscriber.unregister()
+            self.depth_subscriber.unregister()
 
         for contour in contours:
             if cv.contourArea(contour) > 400:  # Arbitrary threshold
                 M = cv.moments(contour)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
+                
+                # calculate depth
+                depth = cv_depth[cy, cx]
 
-                # Max number of attempts to re-read depth
-                max_attempts = 10
-                attempts = 0
-
-                # while depth_at_centroid == 0 and attempts < max_attempts:
-                #     depth_at_centroid = depth_image[cy, cx]
-                #     attempts += 1
-
-                # # If depth is still 0 after all attempts, handle it appropriately (e.g., skip this iteration, log a warning, etc.)
-                # if depth_at_centroid == 0:
-                #     print("Warning: Unable to get valid depth after multiple attempts.")
-                #     continue  # Skip to the next contour or handle as desired
-
-                # # Convert the depth value to meters
-                # depth_in_meters = depth_at_centroid / 1000.0
-
-                # # Convert 2D image point to 3D camera point
-                # point_3D = self.project_2D_to_3D(cx, cy, depth_at_centroid)
-
-                # # Draw the depth value on the image
-                # font = cv.FONT_HERSHEY_SIMPLEX
-                # cv.putText(cv_image, f"{depth_in_meters:.2f}m", (cx, cy-20), font, 0.5, (255, 255, 255), 2)
-
+                if depth == 0:
+                    print('No depth value')
+                    return None
+            
                 # Draw a circle around the detected object
                 cv.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
 
@@ -126,11 +116,19 @@ class Camera:
                 x, y, w, h = cv.boundingRect(contour)
                 cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
-                # Display the image with the drawn circle
-                cv.imshow('Detected Object', cv_image)
-                cv.waitKey(1)
+                print('Detected Object at: ', cx, cy, depth)
+                
+                coordinates = (cx, cy, depth)
 
-            # return point_3D
+                return coordinates
+
+
+
+                    
+
+    
+        
+        
 
 
         
