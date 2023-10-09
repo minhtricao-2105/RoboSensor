@@ -105,7 +105,21 @@ The contributors in this project are:
   ROS_HOSTNAME=192.168.0.101                  # Ip of your laptop, using ifconfig to check
   ```
 
-  * Then source it after chaging the bashrc file:
+  * Then source it after chaging the bashrc file: source ~/.bashrc
+  * In one of the terminal in your PC: run this:
   ```
-  source ~/.bashrc
+  ssh ubuntu@IP_address
   ```
+	
+  * On that terminal run:
+  ```
+  roslaunch turtlebot3_bringup turtlebot3_robot.launch
+  ```
+ 
+ * Open another terminal and ssh to Turtlebot3. Then go to catkin_ws folder in Turtlebot3 and execute: 
+  ```
+  roslaunch turtlebot3_bringup turtlebot3_remote.launch
+  ```
+
+
+	
