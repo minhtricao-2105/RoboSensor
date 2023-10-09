@@ -59,7 +59,7 @@ class RealSense:
 
         lower_yellow = np.array([20, 100, 100])  # Adjust these values as needed
         upper_yellow = np.array([40, 255, 255])  # Adjust these values as needed
-        mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -84,7 +84,9 @@ class RealSense:
 
                 self.depth = self.depth_image[cy][cx]
 
-                cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                # cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+                print(self.depth)
 
                 cv2.imshow('Detected Object', cv_image)
 

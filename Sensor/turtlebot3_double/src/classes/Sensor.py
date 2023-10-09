@@ -11,6 +11,7 @@ import time
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from sklearn.linear_model import LinearRegression
+from sensor_msgs.msg import LaserScan
 
 #For documentation only:
 #Max linear speed = 0.26
@@ -27,6 +28,7 @@ class Sensor:
         # Subscriber:
         self.image_sub = rospy.Subscriber('/tb3_0/camera/rgb/image_raw', Image, self.image_callback)
         self.depth_sub = rospy.Subscriber('/tb3_0/camera/depth/image_raw', Image, self.depth_callback)
+        self.laser_sub = rospy.Subscriber('/tb3_0/scan', LaserScan, self.laser_callback)
 
         # Publisher:
         self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
@@ -53,6 +55,12 @@ class Sensor:
         self.last_translations = []  # List to store translation vectors
         self.last_rotations = []     # List to store rotation vectors
         self.max_readings = 50       # Maximum number of readings to keep
+
+        self.laser_data = None
+
+    # Laser call back function
+    def laser_callback(self, msg):
+        self.laser_data = msg
 
     # Callback function for the subscriber:
     def depth_callback(self, msg):
@@ -141,11 +149,24 @@ class Sensor:
             elif self.depth < 0.3:
                 # Define kp for linear velocity
                 kp_linear = -0.25
-                linear_velocity = -0.25
+                linear_velocity = -0.2 * self.depth * 2
             else:
                 # Define kp for linear velocity
                 kp_linear = 0.25
                 linear_velocity = kp_linear*(self.depth)
+
+            # get laser range data
+            laser_range = self.laser_data.ranges
+            
+            count = 0
+            for i in range(len(laser_range)):
+                if laser_range[i] < 0.18 and laser_range[i] > self.laser_data.range_min:
+                    count = count + 1
+
+            if count >= 18:
+                rospy.INFO("COLLISION")
+                linear_velocity = 0.0
+                angular_velocity = 0.0
             
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
