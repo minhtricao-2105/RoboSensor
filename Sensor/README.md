@@ -9,6 +9,20 @@ Furthermore, the project environment is simulated within Gazebo, resembling a ro
 
 Challenges faced, such as intermittent ArUco marker detection and potential collision scenarios, have been addressed by enhancing detection techniques and implementing obstacle avoidance measures. The project serves as a testament to the application of computer vision and robotics control in creating synchronized and autonomous multi-robot systems. As we continue refining our algorithms and strategies, we anticipate achieving seamless tandem movement between the guider and follower TurtleBots, both in simulation and real-world scenarios.
 
+## Contributors:
+The contributors in this project are:
+  1.  Minh Tri Cao - Student ID Number: 14231702:
+    *  Creating world file.
+    *  Control the guider.
+    *  Apply P Controller for the Follower.
+    *  Testing algorithm in the acutal TurtleBot.
+      
+  2.  Anh Tung Nguyen - Student ID Number: 14072286:
+    *  Creating launch file.
+    *  Control the follower.
+    *  Apply Line of best fit Approach for the Follower.
+    *  Testing algorithm in the acutal TurtleBot.
+
 ## Installation and Setup Guide
 ### Simulation Environment
   1. Prerequisites:
@@ -20,13 +34,13 @@ Challenges faced, such as intermittent ArUco marker detection and potential coll
   Note: Detailed installation instructions for these tools can be found on their respective official websites.
 
   2. Control Setup
-     i. Keyboard Control:
-     *  Using these keys: 'W', 'A', 'S', 'D', 'Space' to control the guider turtlebot, detailed can be found in the script of guider_keyboard.py
-     ii. Xbox Joystick Control:
-     *  Ensure your Xbox joystick is correctly connected and detected by your machine.
-     *  Use the joystick's analog sticks and buttons to guide the guider TurtleBot's movement. A detailed button map is available in the joystick control guide. (guider_controller.py)
+    * Keyboard Control:
+       *  Using these keys: 'W', 'A', 'S', 'D', 'Space' to control the guider turtlebot, detailed can be found in the script of guider_keyboard.py
+    *  Xbox Joystick Control:
+      *  Ensure your Xbox joystick is correctly connected and detected by your machine.
+      *  Use the joystick's analog sticks and buttons to guide the guider TurtleBot's movement. A detailed button map is available in the joystick control guide. (guider_controller.py)
     
-  3. Running the Project:
+  4. Running the Project:
   *  In the first terminal, Launching the Simulation:
   ```
   roslaunch double_turtlebot_launcher multi_turtlebot3.launch
@@ -42,3 +56,5 @@ Challenges faced, such as intermittent ArUco marker detection and potential coll
   ```
   rosrun turtlebot3_double follower.py
   ```
+
+### Setup in Real TurtleBot
