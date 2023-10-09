@@ -23,6 +23,15 @@ The contributors in this project are:
     *  Apply Line of best fit Approach for the Follower.
     *  Testing algorithm in the acutal TurtleBot.
 
+## Requirement:
+### Software System:
+*  Ubuntu 20.04
+*  Ros Noetic
+*  Python3 + OpenCV version 4.0+
+### Hardware System:
+*  2 TurtleBot3 Waffle or Waffle Pi
+*  Camera Realsense D435
+
 ## Installation and Setup Guide
 ### Simulation Environment
   1. Prerequisites:
