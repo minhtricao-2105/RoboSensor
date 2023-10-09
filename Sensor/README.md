@@ -57,4 +57,55 @@ The contributors in this project are:
   rosrun turtlebot3_double follower.py
   ```
 
-### Setup in Real TurtleBot
+### Real TurtleBot Demonstration
+  1. Setup for the real TurtleBot3
+  *  Check the name of your Ethernet interface by running:
+  ```
+  ip a
+  ```
+
+  *  Look for the name of your Ethernet interface, which typically starts with "eth" or "enp."
+  *  Edit the network configuration for your Ethernet interface using the following command, replacing your_interface_name with the name of your Ethernet interface:
+  ```
+  sudo nano /etc/netplan/01-network-manager-all.yaml
+  ```
+
+  *  Inside the editor, add the following lines to specify your desired static IP address, gateway, and DNS servers. Make sure to adjust the values according to your network configuration:
+  ```
+  	network:
+	  version: 2
+	  renderer: NetworkManager
+	  ethernets:
+	    your_interface_name:
+	      addresses: [192.168.0.100/24]  # Set your desired IP address and subnet mask
+	      gateway4: 192.168.0.1         # Set your gateway IP address
+	      nameservers:
+		addresses: [8.8.8.8, 8.8.4.4]  # Set your DNS server IP addresses
+  ```
+
+  *  Save the file and exit the editor (in nano, you can press Ctrl + O, Enter, and Ctrl + X).
+  *  Apply the changes by running:
+  ```
+  sudo netplan apply
+  ```
+
+  *  Restart the network manager:
+  ```
+  sudo systemctl restart NetworkManager
+  ```
+
+  * Edit bashrc by this command:
+  ```
+  nano ~/.bashrc
+  ```
+
+  * Passing these command in the file and save it:
+  ```
+  ROS_MASTER_URI=http://192.168.0.100:11311   # Ip of your TurtleBot 
+  ROS_HOSTNAME=192.168.0.101                  # Ip of your laptop, using ifconfig to check
+  ```
+
+  * Then source it after chaging the bashrc file:
+  ```
+  source ~/.bashrc
+  ```
