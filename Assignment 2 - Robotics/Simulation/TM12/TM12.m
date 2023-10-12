@@ -34,7 +34,7 @@ classdef TM12 < OmcronBaseClass
             self.homeQ = qHome;
 
             % Set up name
-            self.name = "TM12";
+            self.label = "TM12";
 
             % Setup the workspace of the robot:
             self.workspace = workplaceInput;

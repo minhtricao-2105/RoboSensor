@@ -12,7 +12,8 @@ classdef OmcronBaseClass < handle
         homeQ = [];
 
         % Setup the name of the robot:
-        name;
+        label;
+        name; 
 
         % Define the robot model in this class:
         model;
@@ -420,21 +421,21 @@ classdef OmcronBaseClass < handle
                 centerPoint = (frame + base)/2;
 
                 if(centerPoint(1) == base(1) && centerPoint(3) == base(3))
-                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                    if (strcmp(self.label, "TM5Mobile")) || (strcmp(self.label, "TM5"))
                         radii = [0.08, radius(2), 0.08];
                     else
                         radii = [0.1, radius(2), 0.1];
                     end
 
                 elseif(centerPoint(3) == base(3))
-                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                    if (strcmp(self.label, "TM5Mobile")) || (strcmp(self.label, "TM5"))
                         radii = [radius(1), 0.08, 0.08];
                     else
                         radii = [radius(1), 0.1, 0.1];
                     end
 
                 elseif(centerPoint(1) == base(1))
-                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                    if (strcmp(self.label, "TM5Mobile")) || (strcmp(self.label, "TM5"))
                         radii = [0.08, 0.08, radius(3)];
                     else
                         radii = [0.1, 0.1, radius(3)];

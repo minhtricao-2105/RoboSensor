@@ -37,7 +37,7 @@ classdef TM5Mobile < OmcronBaseClass
             self.homeQ = qHome;
 
             % Set up name
-            self.name = "TM5Mobile";
+            self.label = "TM5Mobile";
 
             % Setup the workspace of the robot:
             self.workspace = workplaceInput;
