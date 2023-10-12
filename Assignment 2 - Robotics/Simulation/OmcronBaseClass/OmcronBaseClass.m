@@ -351,6 +351,9 @@ classdef OmcronBaseClass < handle
                 if i == 2
                     Zdirection = orientation(1:3,3);
                     center = center + 0.15 * Zdirection';
+                elseif (i == 6)
+                    Zdirection = orientation(1:3,3);
+                    center = center + 0.05 * Zdirection';
                 end
 
                 % Center of ellipsoid for each links
@@ -410,23 +413,36 @@ classdef OmcronBaseClass < handle
 
                 frame = tr(1:3,4,i+1)';
 
-                radius = (frame - base)/2;
+                radius = abs((frame - base)/2) + 0.02;
 
                 centerPoint = (frame + base)/2;
 
                 if(centerPoint(1) == base(1) && centerPoint(3) == base(3))
-                    radii = [0.08, radius(2), 0.08];
+                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                        radii = [0.08, radius(2), 0.08];
+                    else
+                        radii = [0.1, radius(2), 0.1];
+                    end
 
                 elseif(centerPoint(3) == base(3))
-                    radii = [radius(1), 0.08, 0.08];
+                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                        radii = [radius(1), 0.08, 0.08];
+                    else
+                        radii = [radius(1), 0.1, 0.1];
+                    end
 
                 elseif(centerPoint(1) == base(1))
-                    radii = [0.08, 0.08, radius(3)];
+                    if (strcmp(self.name, "TM5Mobile")) || (strcmp(self.name, "TM5"))
+                        radii = [0.08, 0.08, radius(3)];
+                    else
+                        radii = [0.1, 0.1, radius(3)];
+                    end
                 end
 
                 % Adjust the link the number 6 because of having the gripper:
                 if i == 6
                     radii = [0.05, 0.08, 0.1];
+                    disp("debug")
                 end
                 self.linkEllipsoid.radii{i} = radii;
             end
@@ -437,14 +453,14 @@ classdef OmcronBaseClass < handle
         function isCollision = CheckSelfCollision(self)
             
             % Generate the ellipsoid for each link of the robot:
-            self.CreateEllipsoidLinks(false);
+            self.CreateEllipsoidLinks(true);
             
             % Get the number of link:
             numLinks = length(self.model.links);
 
             % Loop over all pairs of ellipsoids to check for collision
             for i = 1:4
-                for j = i+2:6
+                for j = (i+2):6
                     % Get the center and radii of the first ellipsoid
                     center1 = self.linkEllipsoid.center{i}';
                     A = self.linkEllipsoid.A{i};

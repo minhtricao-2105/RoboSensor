@@ -28,6 +28,9 @@ classdef TM5 < OmcronBaseClass
             % Setup the home position of the robot:
             self.homeQ = qHome;
 
+            % Set up name
+            self.name = "TM5";
+
             % Setup the workspace of the robot:
             self.workspace = workplaceInput;
 
