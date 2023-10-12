@@ -133,7 +133,7 @@ classdef OmcronBaseClass < handle
         function check = GroundCollision(self, q)
             
             % Get the links of the robot:
-            links = self.model.links;
+            links = self.model.links; 
 
             % Get the link transform:
             transform = self.GetLinkPoses(q);
