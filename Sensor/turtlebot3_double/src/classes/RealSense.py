@@ -2,7 +2,9 @@
 
 import rospy
 import cv2
+from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
+import math
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
@@ -16,16 +18,17 @@ class RealSense:
         self.bridge = CvBridge()
 
         # Subscriber:
-        self.imageSub = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
+        self.imageSub = rospy.Subscriber("/camera/color/image_raw", Image, self.aruco_callback)
         self.depthSub = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
-        self.apriltagSub = rospy.Subscriber("/tag_detections", AprilTagDetectionArray, self.apriltag_callback)
 
         # Data Members of this class:
         self.depth_image = None
         self.rgb_image = None
-        self.apriltag_detections = None  # Store AprilTag detections
 
         self.depth = None
+
+        self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+        self.parameters = cv2.aruco.DetectorParameters()
 
     # Callback function for the subscriber:
     def depth_callback(self, msg):
@@ -33,20 +36,10 @@ class RealSense:
         # Store the image in the data member:
         self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
-        # Access depth values at specific pixel coordinates (x, y)
-        # x = 424  # Replace with the desired x-coordinate (pixel column)
-        # y = 240  # Replace with the desired y-coordinate (pixel row)
-
-        # self.depth = self.depth_image[y][x]  # Access the depth value at (x, y)
-
-        # Display depth image (optional)
-        # cv2.imshow("Depth Image", self.depth_image)
-        # cv2.waitKey(1)
-
     def rgb_callback(self, msg):
 
         # Store the image in the data member:
-        # self.rgb_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        self.rgb_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
@@ -59,7 +52,7 @@ class RealSense:
 
         lower_yellow = np.array([20, 100, 100])  # Adjust these values as needed
         upper_yellow = np.array([40, 255, 255])  # Adjust these values as needed
-        mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -84,12 +77,81 @@ class RealSense:
 
                 self.depth = self.depth_image[cy][cx]
 
-                cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                # cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+                print(self.depth)
 
                 cv2.imshow('Detected Object', cv_image)
 
                 cv2.waitKey(1)
 
-    def apriltag_callback(self, msg):
-        # Store the AprilTag detections
-        self.apriltag_detections = msg.detections
+    def aruco_callback(self, msg):
+
+        # Store the image in the data member:
+        self.rgb_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        # Convert the ROS message to an OpenCV image:
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+
+        # Detect ArUco markers:
+        markerCorners, markerIds, _= cv2.aruco.detectMarkers(gray, self.dictionary, parameters=self.parameters)
+
+        if markerIds is not None:
+            ########################
+            #This function is used to get the rotation matrix and translation matrix 
+            #for reference: https://docs.opencv.org/4.8.0/d9/d6a/group__aruco.html#ga3bc50d61fe4db7bce8d26d56b5a6428a
+            marker_size = 0.2          #replace with real marker size
+
+            fx = 0.9187401733398438     #focal length in x axis
+            fy = 0.9183084716796875      #focal length in y axis
+            cx = 0.6472181396484375            #principal point x
+            cy = 0.3458296203613281            #principal point y
+
+            camera_matrix = np.array([[fx, 0, cx],
+                                    [0, fy, cy],
+                                    [0, 0, 1]], dtype=np.float64)
+
+            
+            k1 = 0
+            k2 = 0
+            p1 = 0
+            p2 = 0
+            k3 = 0
+            
+            dist_coeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float64)
+
+            rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
+            
+            self.translation = tvecs
+            self.rotation = rvecs
+            
+
+            #now use rvecs and tvecs for controller
+            ########################
+
+            cv2.aruco.drawDetectedMarkers(cv_image, markerCorners, markerIds)
+
+            # Example: Taking the depth value of the first detected marker's center
+            self.center_x = int((markerCorners[0][0][0][0] + markerCorners[0][0][2][0]) / 2)
+            self.center_y = int((markerCorners[0][0][0][1] + markerCorners[0][0][2][1]) / 2)
+
+            # Get the depth value from the depth image:
+            # self.depth = self.depth_image[self.center_y][self.center_x]
+            self.depth = math.sqrt(self.translation[0][0][0]*self.translation[0][0][0] + self.translation[0][0][1]*self.translation[0][0][1])
+
+            # Display the value on the image:
+            cv2.putText(cv_image, str(self.depth), (self.center_x, self.center_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+            # Draw a circle at the center of the marker:
+            cv2.circle(cv_image, (self.center_x, self.center_y), 5, (0, 0, 255), -1)
+
+        else:
+            print("can not DETECT")
+
+
+
+        # Now you can visualize the image with detected markers using OpenCV
+        cv2.imshow('Detected ArUco markers', cv_image)
+        cv2.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.

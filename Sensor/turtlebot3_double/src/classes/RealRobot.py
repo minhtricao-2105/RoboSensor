@@ -17,7 +17,7 @@ from sensor_msgs.msg import LaserScan
 #Max linear speed = 0.26
 #Max rational speed = 1.82 rad/s
 
-class Sensor:
+class RealRobot:
 
     # Constructor:
     def __init__(self):
@@ -26,15 +26,13 @@ class Sensor:
         self.bridge = CvBridge()
 
         # Subscriber:
-        self.image_sub = rospy.Subscriber('/tb3_0/camera/rgb/image_raw', Image, self.image_callback)
-        self.depth_sub = rospy.Subscriber('/tb3_0/camera/depth/image_raw', Image, self.depth_callback)
-        self.laser_sub = rospy.Subscriber('/tb3_0/scan', LaserScan, self.laser_callback)
+        self.image_sub = rospy.Subscriber('/camera/color/image_raw', Image, self.image_callback)
+        self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         # Publisher:
-        self.cmd_vel_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
         # Data Members of this class:
-        self.depth_image = None
         self.rgb_image = None
 
         # ArUco Setup:
@@ -63,12 +61,6 @@ class Sensor:
         self.laser_data = msg
 
     # Callback function for the subscriber:
-    def depth_callback(self, msg):
-
-        # Store the image in the data member:
-        self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
-
-    # Callback function for the subscriber:
     def image_callback(self, msg):
 
         # Store the image in the data member:
@@ -86,12 +78,12 @@ class Sensor:
             ########################
             #This function is used to get the rotation matrix and translation matrix 
             #for reference: https://docs.opencv.org/4.8.0/d9/d6a/group__aruco.html#ga3bc50d61fe4db7bce8d26d56b5a6428a
-            marker_size = 0.23          #replace with real marker size
+            marker_size = 0.2           #replace with real marker size
 
-            fx = 1.085595       #focal length in x axis
-            fy = 1.085595       #focal length in y axis
-            cx = 320            #principal point x
-            cy = 240            #principal point y
+            fx = 0.9187401733398438       #focal length in x axis
+            fy = 0.9183084716796875       #focal length in y axis
+            cx = 0.6472181396484375            #principal point x
+            cy = 0.3458296203613281            #principal point y
 
             camera_matrix = np.array([[fx, 0, cx],
                                     [0, fy, cy],
@@ -108,6 +100,8 @@ class Sensor:
 
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
             
+            print(f'translation: {tvecs}' )
+
             self.translation = tvecs
             self.rotation = rvecs
 
@@ -141,7 +135,6 @@ class Sensor:
             kp = 0.001
             angular_velocity = -kp*error_x
             # Get the depth value from the depth image:
-            # self.depth = self.depth_image[self.center_y][self.center_x]
             self.depth = math.sqrt(self.translation[0][0][0]*self.translation[0][0][0] + self.translation[0][0][1]*self.translation[0][0][1])
                         
             if self.depth == 0.3 or self.center_x is None:

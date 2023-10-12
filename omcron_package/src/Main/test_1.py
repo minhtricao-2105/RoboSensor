@@ -41,20 +41,15 @@ while K is None:
 
 x,y, depth = K
 
-point_3D = camera.project_2D_to_3D(x, y, depth)
-
-print(point_3D)
-
 # Get the end-effector pose:
 T = robot.model.fkine(robot.model.q).A
 
+point = camera.project_2D_to_3D(x, y, depth)
 
-dx = T[0, 3] - point_3D[0]/1000
-dy = T[1, 3] - point_3D[1]/1000
-dz = T[2, 3] - point_3D[2]/1000
+print(T)
+print(point)
 
-print('Detected Object at: ', dx, dy, dz)
 
-# robot.move_ee_up_down(env, delta_x=dx, delta_y=dy, delta_z=dz,real_robot=False)
+# robot.move_ee_up_down(env, delta_x=, delta_y=dy, delta_z=dz,real_robot=False)
 
 rospy.spin()
