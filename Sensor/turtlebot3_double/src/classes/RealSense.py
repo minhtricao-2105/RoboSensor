@@ -37,6 +37,7 @@ class RealSense:
         self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
     def rgb_callback(self, msg):
+        
 
         # Store the image in the data member:
         self.rgb_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -86,7 +87,7 @@ class RealSense:
                 cv2.waitKey(1)
 
     def aruco_callback(self, msg):
-
+        rospy.sleep(1.0)
         # Store the image in the data member:
         self.rgb_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 

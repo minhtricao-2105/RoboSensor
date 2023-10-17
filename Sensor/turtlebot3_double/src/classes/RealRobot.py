@@ -58,6 +58,7 @@ class RealRobot:
 
     # Laser call back function
     def laser_callback(self, msg):
+        rospy.sleep(0.5)
         self.laser_data = msg
 
     # Callback function for the subscriber:
@@ -100,7 +101,7 @@ class RealRobot:
 
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
             
-            print(f'translation: {tvecs}' )
+            # print(f'translation: {tvecs}' )
 
             self.translation = tvecs
             self.rotation = rvecs
@@ -150,17 +151,17 @@ class RealRobot:
                 linear_velocity = kp_linear*(self.depth)
 
             # get laser range data
-            laser_range = self.laser_data.ranges
+            # laser_range = self.laser_data.ranges
             
-            count = 0
-            for i in range(len(laser_range)):
-                if laser_range[i] < 0.18 and laser_range[i] > self.laser_data.range_min:
-                    count = count + 1
+            # count = 0
+            # for i in range(len(laser_range)):
+            #     if laser_range[i] < 0.18 and laser_range[i] > self.laser_data.range_min:
+            #         count = count + 1
 
-            if count >= 18:
-                rospy.INFO("COLLISION")
-                linear_velocity = 0.0
-                angular_velocity = 0.0
+            # if count >= 18:
+            #     rospy.INFO("COLLISION")
+            #     linear_velocity = 0.0
+            #     angular_velocity = 0.0
             
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
