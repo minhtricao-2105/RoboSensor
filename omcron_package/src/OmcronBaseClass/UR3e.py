@@ -3,6 +3,7 @@ import numpy as np
 import rospy, time, actionlib, moveit_msgs.msg, moveit_commander, math, sys, swift
 import roboticstoolbox as rtb 
 import copy
+import spatialgeometry.geom as collisionObj
 
 # Python Message via ROS:
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -39,12 +40,29 @@ class UR3e:
         # Data Member of the class
         self.currentQ = []
 
+        # Set up the robot model:
         self.model = rtb.models.UR3()
+
+        # Setup Gripper:
+        self._gripper_path = "/home/minhtricao/git/UTS_RS2_VNG_Team/RTB-P Test Files/SomeApplications/CAMGRIPPER.STL"
+        self._gripper = collisionObj.Mesh(filename=self._gripper_path,pose = SE3(0,0,0),scale=[0.001, 0.001, 0.001],color = [1.0,0.0,0.0,1])
+        self._TGR = SE3.Rx(pi)*SE3(0,-0.105,-0.175)
+
+        # Setup the camera:
+        self._cam = collisionObj.Cuboid(scale=[0.03,0.06,0.015], pose = SE3(0,0,0), color = [0.5,0.5,0.1,1])
+        self._TCR = SE3(0.085,0,0.09)*SE3.Ry(pi/2) # cam pose in ee frame
+
+        self._cam_move(self._cam, self.model, self._TCR)
+        self._cam_move(self._gripper, self.model, self._TGR)
 
     ##---- CallBack Function:
     def getpos(self,msg):
         self.currentQ = msg.position
-  
+    
+    ## --- Move the Camera and the Gripper to the end-effector:
+    def _cam_move(self, cam, robot, T):
+        cam.T = robot.fkine(robot.q)*T
+
     ##---- set_up_action_client function:
     def set_up_action_client(self):
         
@@ -153,10 +171,12 @@ class UR3e:
         # Simulation the Robot in the Swift Environment:
         for q in path:
             self.model.q = q
+            self._cam_move(self._cam, self.model, self._TCR)
+            self._cam_move(self._gripper, self.model, self._TGR)    
             env.step(dt)
 
     ##---- perform_rmrc_2_points function:
-    def perform_rmrc_2_points(self, point1, point2, num_waypoints = 100, lock_ee = True):
+    def perform_rmrc_2_points(self, point1, point2, num_waypoints = 100):
 
         # Initialize the waypoints matrix:
         waypoints = np.zeros((num_waypoints, 3))
@@ -169,10 +189,6 @@ class UR3e:
         # Create a matrix of joint angles:
         q_matrix = np.empty((num_waypoints, self.model.n))
         q_matrix[0, :] = self.model.q
-
-        # Create a desired pose to lock the orientation of the end-effector:
-        desired_pose = self.model.fkine(self.model.q).A
-        desired_orientation = desired_pose[0:3, 0:3]
         
         # The delta T between each steps:
         deltaT = 0.05
@@ -208,22 +224,7 @@ class UR3e:
 
         return q_matrix
     
-    ##---- calculate_ori_diff function:
-
-    def calculate_ori_diff(self, desiredOre, currentPose):
-        currentPose = self.model.fkine(currentPose).A
-        currentOre = currentPose[0:3, 0:3]
-
-        rotationMatrix = desiredOre @ currentOre.T
-        r = R.from_matrix(rotationMatrix)
-        angle = r.as_rotvec()
-
-        orientationDiff = angle
-
-        return orientationDiff
-
     ##---- move_ee_up_down function:
-
     def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 1, real_robot = False):
         # Get the end-effector pose at this position:
         ee_tr = self.model.fkine(self.model.q).A
@@ -282,7 +283,6 @@ class UR3e:
             return False
         else: 
             return True
-
 
     def solve_elbow_up_ikine(self, desired_T, q_guess, env, speed = 1, real_robot = False):
 

@@ -71,7 +71,7 @@ class Camera:
         self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
-    def detect_blue_object(self):
+    def detect_object(self, color = 'blue'):
         if self.latest_rgb is None or self.latest_depth is None:
             print('No RGB or Depth Image image received')
             return None
@@ -85,17 +85,26 @@ class Camera:
         hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
         # -- Define the lower and upper bounds of the blue color
-        lower_blue = np.array([100, 50, 50])
-        upper_blue = np.array([140, 255, 255])
+        if color == 'blue':
+            lower_threshold = np.array([100, 50, 50])
+            upper_threshold = np.array([140, 255, 255])
+        elif color == 'red':
+            lower_threshold  = np.array([0, 50, 50])
+            upper_threshold = np.array([10, 255, 255])
+        elif color == 'white':
+            lower_threshold  = np.array([0, 0, 200])
+            upper_threshold = np.array([255, 30, 255])
+        elif color == 'green':
+            lower_threshold  = np.array([35, 50, 50])
+            upper_threshold = np.array([85, 255, 255])
+        
 
-        lower_red1 = np.array([0, 50, 50])
-        upper_red1 = np.array([10, 255, 255])
-
-        mask = cv.inRange(hsv, lower_red1, upper_red1)
+        mask = cv.inRange(hsv, lower_threshold, upper_threshold)
 
         # -- Find contours:
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
+        # -- If we have found at least one contour:
         if contours is not None:
             self.rgb_subscriber.unregister()
             self.depth_subscriber.unregister()
