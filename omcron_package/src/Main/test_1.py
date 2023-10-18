@@ -32,22 +32,20 @@ rospy.init_node('robot_node')
 # Setup the Camera:
 camera = Camera()
 
-K = None
+detected_objects = []
 
-while K is None:
-    K = camera.detect_object()
+while not detected_objects:
+    detected_objects = camera.detect_object()
 
-# convert to 3D point
+for K in detected_objects:
+    # Convert to 3D point
+    x, y, depth = K
+    
+    point = camera.project_2D_to_3D(x, y, depth)
 
-x,y, depth = K
+    # print(T)
+    print(point)
 
-# Get the end-effector pose:
-# T = robot.model.fkine(robot.model.q).A
-
-point = camera.project_2D_to_3D(x, y, depth)
-
-# print(T)
-print(point)
 
 
 # robot.move_ee_up_down(env, delta_x=, delta_y=dy, delta_z=dz,real_robot=False)
