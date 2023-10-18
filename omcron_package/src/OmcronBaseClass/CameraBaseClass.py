@@ -108,6 +108,8 @@ class Camera:
         }
 
         lower_threshold, upper_threshold = thresholds.get(color, (None, None))
+        print(lower_threshold)
+        print(upper_threshold)
         if not lower_threshold or not upper_threshold:
             print(f"Color {color} not recognized.")
             return None
