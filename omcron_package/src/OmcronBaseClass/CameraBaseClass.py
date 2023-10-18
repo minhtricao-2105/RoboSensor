@@ -70,7 +70,15 @@ class Camera:
 
         P_camera = np.array([x, y, depth, 1])  # 3D point in the camera frame
 
-        return P_camera
+        # Transformation between Cam and End-effector:
+        T_cam_ee = np.array([[0, 0, 1, 0.0329],
+                            [0, -1, 0, -0.0405],
+                            [1, 0, 0, 0.0632],
+                            [0, 0, 0, 1]])
+        
+        P_ee = np.dot(T_cam_ee, P_camera)
+
+        return P_ee
     
     # ReSubscribe to the topics:
     def re_subscribe(self):
@@ -78,61 +86,44 @@ class Camera:
         self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
-    def detect_object(self, color = 'blue'):
+    def detect_object(self, color='blue'):
         if self.latest_rgb is None or self.latest_depth is None:
             print('No RGB or Depth Image image received')
             return None
-        
-        # -- Convert the image to OpenCV format:
+
+        # Convert the image to OpenCV format:
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
         cv_depth = bridge.imgmsg_to_cv2(self.latest_depth, "passthrough")
 
-        # -- Convert the image to HSV format:
+        # Convert the image to HSV format:
         hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
-        # -- Define the lower and upper bounds of the blue color
-        if color == 'blue':
-            lower_threshold = np.array([100, 50, 50])
-            upper_threshold = np.array([140, 255, 255])
-        elif color == 'red':
-            lower_threshold  = np.array([0, 50, 50])
-            upper_threshold = np.array([10, 255, 255])
-        elif color == 'white':
-            lower_threshold  = np.array([0, 0, 200])
-            upper_threshold = np.array([255, 30, 255])
-        elif color == 'green':
-            lower_threshold  = np.array([35, 50, 50])
-            upper_threshold = np.array([85, 255, 255])
-        
+        # Define the lower and upper bounds of the colors
+        thresholds = {
+            'blue': (np.array([100, 50, 50]), np.array([140, 255, 255])),
+            'red': (np.array([0, 50, 50]), np.array([10, 255, 255])),
+            'white': (np.array([0, 0, 200]), np.array([255, 30, 255])),
+            'green': (np.array([35, 50, 50]), np.array([85, 255, 255]))
+        }
+
+        lower_threshold, upper_threshold = thresholds.get(color, (None, None))
+        if not lower_threshold or not upper_threshold:
+            print(f"Color {color} not recognized.")
+            return None
 
         mask = cv.inRange(hsv, lower_threshold, upper_threshold)
-
-        # -- Find contours:
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-        # -- If we have found at least one contour:
-        if contours is not None:
-            self.rgb_subscriber.unregister()
-            self.depth_subscriber.unregister()
+        detected_objects = []
 
         for contour in contours:
             if cv.contourArea(contour) > 400:  # Arbitrary threshold
                 M = cv.moments(contour)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
-
-                print(cx)
-                print(cy)
-                
-                # calculate depth
-                # depth = cv_depth[cy][cx]
                 depth = 0.285
 
-                if depth == 0:
-                    print('No depth value')
-                    return None
-            
                 # Draw a circle around the detected object
                 cv.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
 
@@ -142,11 +133,11 @@ class Camera:
 
                 print('Detected Object at: ', cx, cy, depth)
 
-                # cv.imshow('RGB image', cv_image)
-                # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
-                
                 coordinates = (cx, cy, depth)
+                detected_objects.append(coordinates)
 
-                return coordinates
+        # cv.imshow('RGB image', cv_image)
+        # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
 
+        return detected_objects
       
