@@ -86,7 +86,7 @@ class Camera:
         self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
-    def detect_object(self, color='blue'):
+    def detect_object(self, color):
         if self.latest_rgb is None or self.latest_depth is None:
             print('No RGB or Depth Image image received')
             return None
@@ -113,6 +113,9 @@ class Camera:
         elif color == 'green':
             lower_threshold  = np.array([35, 50, 50])
             upper_threshold = np.array([85, 255, 255])
+        elif color == 'yellow':
+            lower_threshold  = np.array([20, 100, 100])
+            upper_threshold = np.array([30, 255, 255])
     
         mask = cv.inRange(hsv, lower_threshold, upper_threshold)
         

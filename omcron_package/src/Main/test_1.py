@@ -34,12 +34,27 @@ robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
 # Setup the Camera:
 camera = Camera()
 
-detected_objects = []
+detected_objects_blue = []
 
-while not detected_objects:
-    detected_objects = camera.detect_object()
+while not detected_objects_blue:
+    detected_objects_blue = camera.detect_object('blue')
 
-for K in detected_objects:
+for K in detected_objects_blue:
+    # Convert to 3D point
+    x, y, depth = K
+    
+    point = camera.project_2D_to_3D(x, y, depth)
+
+    # print(T)
+    print(point)
+
+# ////////////RED////////////
+detected_objects_red = []
+
+while not detected_objects_red:
+    detected_objects_red = camera.detect_object('red')
+
+for K in detected_objects_red:
     # Convert to 3D point
     x, y, depth = K
     
@@ -49,6 +64,20 @@ for K in detected_objects:
     print(point)
 
 
+# ////////////yellow///////////
+detected_objects_yellow = []
+
+while not detected_objects_yellow:
+    detected_objects_yellow = camera.detect_object('yellow')
+
+for K in detected_objects_yellow:
+    # Convert to 3D point
+    x, y, depth = K
+    
+    point = camera.project_2D_to_3D(x, y, depth)
+
+    # print(T)
+    print(point)
 
 # robot.move_ee_up_down(env, delta_x=, delta_y=dy, delta_z=dz,real_robot=False)
 
