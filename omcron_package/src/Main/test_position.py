@@ -13,8 +13,6 @@ sys.path.append(os.path.join(script_dir, ".."))
 # from Classes.GripperBaseClass import Gripper
 from OmcronBaseClass.UR3e import*
 from OmcronBaseClass.CameraBaseClass import*
-from OmcronBaseClass.Gripper import*
-from OmcronBaseClass.Mission import*
 
 # Setup the ROS Node:
 rospy.init_node('robot_node')
@@ -34,20 +32,27 @@ env.add(robot._gripper)
 q_home = [-56.0, -93.8, -41.05, -135.07, 90.0, 34.0]
 q_home = [math.radians(angle) for angle in q_home]
 
-# Using the UR3e robot, move the robot to the home position:
-try:
-    robot.update_robot_position(q_home)
-    robot.set_up_moveIt(0.1)
-    robot.arm.go(q_home, wait=True)
-except:
-    print("No Moveit Driver is running or something went wrong...")
+robot.update_robot_position(q_home)
 
-# Setup the Camera:
-camera = Camera()
+point_1 = np.array([-0.0137, 0.0255, 0.285, 1])
 
-# Setup the Gripper:
-gripper = Gripper()
+point_1_ee = np.array([point_1[0] - 0.0329 , point_1[1] + 0.0405, point_1[2] - 0.0632, 1])
 
-# Begin the main loop of the program:
-if __name__ == '__main__':
-    print('Program is running...')
+print(point_1)
+
+# Convert point_1_transformed to a 4x4 matrix
+point_1_matrix = np.eye(4)  # Create a 4x4 identity matrix
+point_1_matrix[:, -1] = point_1
+
+# Generate cube:
+cube_1 = collisionObj.Cuboid(scale=[0.06,0.06,0.06], pose = SE3(0,0,0), color = [0.5,0.5,0.1,1])
+cube_1.T = transl(0.0175, 0.31, 0)
+env.add(cube_1)
+
+print("Point 1: ", point_1[0])
+print("Point 2: ", point_1[1])
+
+robot.move_ee_up_down(env, delta_x=-point_1_ee [0], delta_y=point_1_ee [1], delta_z= -point_1_ee [2],real_robot=False)
+env.hold()
+
+
