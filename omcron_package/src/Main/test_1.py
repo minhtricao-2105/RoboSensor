@@ -11,23 +11,25 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(script_dir, ".."))
 
 # from Classes.GripperBaseClass import Gripper
-# from OmcronBaseClass.UR3e import*
+from OmcronBaseClass.UR3e import*
 from OmcronBaseClass.CameraBaseClass import*
 
 # Setup the ROS Node:
 rospy.init_node('robot_node')
 
 # Setup the Robot:
-# robot = UR3e()
+robot = UR3e()
 
-# # Setup environment:
-# env = swift.Swift()
-# env.launch(realtime=True)
-# env._send_socket
-# env.add(robot.model)
+# Setup environment:
+env = swift.Swift()
+env.launch(realtime=True)
+env._send_socket
+env.add(robot.model)
+env.add(robot._cam)
+env.add(robot._gripper)
 
 # Setup the initial position of the robot:
-# robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
+robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
 
 # Setup the Camera:
 camera = Camera()

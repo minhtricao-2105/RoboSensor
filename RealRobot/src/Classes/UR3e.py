@@ -33,6 +33,11 @@ class UR3e:
         self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         # self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
         
+        # Waiting for server connection
+        rospy.loginfo("Waiting for move_base action server...")
+        self.client.wait_for_server()
+        rospy.loginfo("Connected to move_base action server")
+
         # Create a Time Flag when creating an object:
         self.start_time = time.perf_counter()
 
