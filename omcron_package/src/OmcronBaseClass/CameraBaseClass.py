@@ -2,16 +2,23 @@
 import numpy as np
 import cv2 as cv
 import rospy
+
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 class Camera:
 
     def __init__(self):
-
+        # D435
         # Define the camera matrix K:
-        self.K = np.array([[619.7423706054688, 0.0, 318.9226379394531],
-              [0.0, 620.3488159179688, 242.47071838378906],
+        # self.K = np.array([[619.7423706054688, 0.0, 318.9226379394531],
+        #       [0.0, 620.3488159179688, 242.47071838378906],
+        #       [0.0, 0.0, 1.0]])
+
+        # D435i
+        self.K = np.array([[918.7401733398438, 0.0, 647.2181396484375],
+              [0.0, 918.3084716796875, 345.8296203613281],
               [0.0, 0.0, 1.0]])
         
         # Define the distortion coefficients:
@@ -54,8 +61,8 @@ class Camera:
     def project_2D_to_3D(self, u, v, depth):
 
         # Extract intrinstic parameters:
-        fx, fy = 619.7423706054688, 620.3488159179688
-        cx, cy = 318.9226379394531, 242.47071838378906
+        fx, fy = 918.7401733398438, 918.3084716796875
+        cx, cy = 647.2181396484375, 345.8296203613281
             
         # Calculate the 3D point:
         x = (u - cx) * depth / fx
@@ -114,9 +121,13 @@ class Camera:
                 M = cv.moments(contour)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])
+
+                print(cx)
+                print(cy)
                 
                 # calculate depth
-                depth = cv_depth[cy, cx]
+                # depth = cv_depth[cy][cx]
+                depth = 0.285
 
                 if depth == 0:
                     print('No depth value')
@@ -130,18 +141,12 @@ class Camera:
                 cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
                 print('Detected Object at: ', cx, cy, depth)
+
+                # cv.imshow('RGB image', cv_image)
+                # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
                 
                 coordinates = (cx, cy, depth)
 
                 return coordinates
 
-
-
-                    
-
-    
-        
-        
-
-
-        
+      
