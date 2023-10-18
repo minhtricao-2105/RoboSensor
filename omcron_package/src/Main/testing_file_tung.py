@@ -12,42 +12,16 @@ sys.path.append(os.path.join(script_dir, ".."))
 # from Classes.GripperBaseClass import Gripper
 # from OmcronBaseClass.UR3e import*
 from OmcronBaseClass.CameraBaseClass import*
+from OmcronBaseClass.Mission import*
 
 # Setup the ROS Node:
 rospy.init_node('robot_node')
 
-# Setup the Robot:
-# robot = UR3e()
-
-# # Setup the Swift Environment:
-# env = swift.Swift()
-# env.launch(realtime=True)
-# env._send_socket
-# env.add(robot.model)
-# env.add(robot._cam)
-# env.add(robot._gripper)
-
-# env.hold()
-
-# Setup the Camera:
 camera = Camera()
+misison = Mission()
 
-K = None
+misison.detect_multi_object()
 
-while K is None:
-    K = camera.detect_object()
-
-# convert to 3D point
-
-x,y, depth = K
-
-# Get the end-effector pose:
-# T = robot.model.fkine(robot.model.q).A
-
-point = camera.project_2D_to_3D(x, y, depth)
-
-# print(T)
-print(point)
 
 
 rospy.spin()
