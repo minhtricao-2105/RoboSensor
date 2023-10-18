@@ -20,7 +20,7 @@ rospy.init_node('robot_node')
 camera = Camera()
 misison = Mission()
 
-misison.detect_multi_object()
+misison.detect_multi_object(camera)
 
 
 
