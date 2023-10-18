@@ -4,6 +4,7 @@ import rospy, time, actionlib, moveit_msgs.msg, moveit_commander, math, sys, swi
 import roboticstoolbox as rtb 
 import copy
 import spatialgeometry.geom as collisionObj
+import rospkg
 
 # Python Message via ROS:
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
@@ -43,8 +44,13 @@ class UR3e:
         # Set up the robot model:
         self.model = rtb.models.UR3()
 
+        # Get package path
+        rospack = rospkg.RosPack()
+        package_path = rospack.get_path('omcron_package')
+
         # Setup Gripper:
         self._gripper_path = "/home/minhtricao/git/UTS_RS2_VNG_Team/RTB-P Test Files/SomeApplications/CAMGRIPPER.STL"
+        # self._gripper_path = package_path + 'GripperModel/CAMGRIPPER.STL'
         self._gripper = collisionObj.Mesh(filename=self._gripper_path,pose = SE3(0,0,0),scale=[0.001, 0.001, 0.001],color = [1.0,0.0,0.0,1])
         self._TGR = SE3.Rx(pi)*SE3(0,-0.105,-0.175)
 
