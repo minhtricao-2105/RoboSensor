@@ -119,9 +119,6 @@ class Camera:
         elif color == 'green':
             lower_threshold  = np.array([35, 50, 50])
             upper_threshold = np.array([85, 255, 255])
-        elif color == 'yellow':
-            lower_threshold  = np.array([20, 100, 100])
-            upper_threshold = np.array([30, 255, 255])
     
         mask = cv.inRange(hsv, lower_threshold, upper_threshold)
         
@@ -149,8 +146,8 @@ class Camera:
 
                 detected_objects.append(coordinates)
 
-        # cv.imshow('RGB image', cv_image)
-        # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
+                # cv.imshow('RGB image', cv_image)
+                # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
 
         return detected_objects
       

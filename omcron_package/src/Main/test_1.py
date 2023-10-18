@@ -21,12 +21,12 @@ rospy.init_node('robot_node')
 robot = UR3e()
 
 # Setup environment:
-env = swift.Swift()
-env.launch(realtime=True)
-env._send_socket
-env.add(robot.model)
-env.add(robot._cam)
-env.add(robot._gripper)
+# env = swift.Swift()
+# env.launch(realtime=True)
+# env._send_socket
+# env.add(robot.model)
+# env.add(robot._cam)
+# env.add(robot._gripper)
 
 # Setup the initial position of the robot:
 robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
@@ -41,7 +41,7 @@ while not detected_objects_blue:
 
 for K in detected_objects_blue:
     # Convert to 3D point
-    x, y, depth = K
+    x, y, depth, label = K
     
     point = camera.project_2D_to_3D(x, y, depth)
 
@@ -56,7 +56,7 @@ while not detected_objects_red:
 
 for K in detected_objects_red:
     # Convert to 3D point
-    x, y, depth = K
+    x, y, depth, label = K
     
     point = camera.project_2D_to_3D(x, y, depth)
 
@@ -72,7 +72,7 @@ while not detected_objects_yellow:
 
 for K in detected_objects_yellow:
     # Convert to 3D point
-    x, y, depth = K
+    x, y, depth, label = K
     
     point = camera.project_2D_to_3D(x, y, depth)
 

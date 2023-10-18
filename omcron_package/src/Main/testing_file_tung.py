@@ -23,5 +23,4 @@ misison = Mission()
 misison.detect_multi_object(camera)
 
 
-
 rospy.spin()

@@ -11,13 +11,13 @@ class Mission:
 
     def detect_multi_object(self, camera):
         
-        colours_to_detect = ['white', 'red', 'yellow']
-        detected_objects = None
+        colours_to_detect = ['blue', 'red', 'yellow']
+        detected_objects = []
 
         for color in colours_to_detect:
             objects_of_color = camera.detect_object(color)
             if objects_of_color:
-                detected_objects.extend(objects_of_color)
+                detected_objects.append(objects_of_color)
         
         for obj in detected_objects:
             x, y, depth, label = obj    
