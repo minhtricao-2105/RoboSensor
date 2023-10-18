@@ -91,6 +91,12 @@ class Camera:
             print('No RGB or Depth Image image received')
             return None
 
+        color_labels = {
+            'blue': 1,
+            'red': 2,
+            'yellow': 3,
+        }
+
         # Convert the image to OpenCV format:
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
@@ -107,9 +113,9 @@ class Camera:
         elif color == 'red':
             lower_threshold  = np.array([0, 50, 50])
             upper_threshold = np.array([10, 255, 255])
-        elif color == 'white':
-            lower_threshold  = np.array([0, 0, 200])
-            upper_threshold = np.array([255, 30, 255])
+        elif color == 'yellow':
+            lower_threshold  = np.array([20, 100, 100])
+            upper_threshold = np.array([30, 255, 255])
         elif color == 'green':
             lower_threshold  = np.array([35, 50, 50])
             upper_threshold = np.array([85, 255, 255])
@@ -139,7 +145,8 @@ class Camera:
 
                 print('Detected Object at: ', cx, cy, depth)
 
-                coordinates = (cx, cy, depth)
+                coordinates = (cx, cy, depth, color_labels[color])
+
                 detected_objects.append(coordinates)
 
         # cv.imshow('RGB image', cv_image)
