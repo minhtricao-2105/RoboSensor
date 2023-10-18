@@ -49,8 +49,8 @@ class UR3e:
         package_path = rospack.get_path('omcron_package')
 
         # Setup Gripper:
-        self._gripper_path = "/home/minhtricao/git/UTS_RS2_VNG_Team/RTB-P Test Files/SomeApplications/CAMGRIPPER.STL"
-        # self._gripper_path = package_path + 'GripperModel/CAMGRIPPER.STL'
+        # self._gripper_path = "/home/anh/workspace/41014_sensor_ws/src/RoboSensor/omcron_package/GripperModel/CAMGRIPPER.STL"
+        self._gripper_path = package_path + '/GripperModel/CAMGRIPPER.STL'
         self._gripper = collisionObj.Mesh(filename=self._gripper_path,pose = SE3(0,0,0),scale=[0.001, 0.001, 0.001],color = [1.0,0.0,0.0,1])
         self._TGR = SE3.Rx(pi)*SE3(0,-0.105,-0.175)
 
