@@ -100,21 +100,22 @@ class Camera:
         hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
 
         # Define the lower and upper bounds of the colors
-        thresholds = {
-            'blue': (np.array([100, 50, 50]), np.array([140, 255, 255])),
-            'red': (np.array([0, 50, 50]), np.array([10, 255, 255])),
-            'white': (np.array([0, 0, 200]), np.array([255, 30, 255])),
-            'green': (np.array([35, 50, 50]), np.array([85, 255, 255]))
-        }
-
-        lower_threshold, upper_threshold = thresholds.get(color, (None, None))
-        print(lower_threshold)
-        print(upper_threshold)
-        if not lower_threshold or not upper_threshold:
-            print(f"Color {color} not recognized.")
-            return None
-
+        # -- Define the lower and upper bounds of the blue color
+        if color == 'blue':
+            lower_threshold = np.array([100, 50, 50])
+            upper_threshold = np.array([140, 255, 255])
+        elif color == 'red':
+            lower_threshold  = np.array([0, 50, 50])
+            upper_threshold = np.array([10, 255, 255])
+        elif color == 'white':
+            lower_threshold  = np.array([0, 0, 200])
+            upper_threshold = np.array([255, 30, 255])
+        elif color == 'green':
+            lower_threshold  = np.array([35, 50, 50])
+            upper_threshold = np.array([85, 255, 255])
+    
         mask = cv.inRange(hsv, lower_threshold, upper_threshold)
+        
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
         detected_objects = []
