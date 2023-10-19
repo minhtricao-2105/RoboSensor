@@ -39,7 +39,7 @@ classdef TM5 < OmcronBaseClass
 
             % Plot the UR3 model on simulation environment
             self.CreateModel();
-            % self.PlotAndColourRobot();
+            self.PlotAndColourRobot();
         end
 
         %% Create Model Function:
