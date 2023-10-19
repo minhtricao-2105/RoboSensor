@@ -18,7 +18,7 @@ class RealSense:
         self.bridge = CvBridge()
 
         # Subscriber:
-        self.imageSub = rospy.Subscriber("/camera/color/image_raw", Image, self.aruco_callback)
+        self.imageSub = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
         self.depthSub = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
         # Data Members of this class:
@@ -53,7 +53,10 @@ class RealSense:
 
         lower_yellow = np.array([20, 100, 100])  # Adjust these values as needed
         upper_yellow = np.array([40, 255, 255])  # Adjust these values as needed
-        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+
+        lower_red  = np.array([0, 50, 50])
+        upper_red = np.array([10, 255, 255])
+        mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -76,7 +79,7 @@ class RealSense:
 
                 # cv2.drawContours(cv_image, contours, -1, (0, 255, 0), 2)  # (0, 255, 0) is the color, 2 is the thickness
 
-                self.depth = self.depth_image[cy][cx]
+                # self.depth = self.depth_image[cy][cx]
 
                 # cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 

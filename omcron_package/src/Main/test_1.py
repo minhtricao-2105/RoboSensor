@@ -29,7 +29,8 @@ robot = UR3e()
 # env.add(robot._gripper)
 
 # Setup the initial position of the robot:
-robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
+# robot.model.q = [-pi/2, -pi/2, -pi/2, -pi/2, pi/2, 0]
+
 
 # Setup the Camera:
 camera = Camera()
@@ -48,23 +49,23 @@ for K in detected_objects_blue:
     # print(T)
     print(point)
 
-# ////////////RED////////////
-detected_objects_red = []
+# # ////////////RED////////////
+# detected_objects_red = []
 
-while not detected_objects_red:
-    detected_objects_red = camera.detect_object('red')
+# while not detected_objects_red:
+#     detected_objects_red = camera.detect_object('red')
 
-for K in detected_objects_red:
-    # Convert to 3D point
-    x, y, depth, label = K
+# for K in detected_objects_red:
+#     # Convert to 3D point
+#     x, y, depth, label = K
     
-    point = camera.project_2D_to_3D(x, y, depth)
+#     point = camera.project_2D_to_3D(x, y, depth)
 
-    # print(T)
-    print(point)
+#     # print(T)
+#     print(point)
 
 
-# ////////////yellow///////////
+# # ////////////yellow///////////
 detected_objects_yellow = []
 
 while not detected_objects_yellow:

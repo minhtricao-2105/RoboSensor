@@ -63,22 +63,24 @@ class Camera:
         # Extract intrinstic parameters:
         fx, fy = 918.7401733398438, 918.3084716796875
         cx, cy = 647.2181396484375, 345.8296203613281
+
+        # translation of camera 
+        tx = -0.0329
+        ty = 0.0405
+        tz = -0.0632
             
-        # Calculate the 3D point:
+        # Calculate the 3D point (with end of effector frame)
         x = (u - cx) * depth / fx
         y = (v - cy) * depth / fy
+        
+        x = x + tx
+        y = y + ty
+        depth = depth - tz
 
         P_camera = np.array([x, y, depth, 1])  # 3D point in the camera frame
 
-        # Transformation between Cam and End-effector:
-        T_cam_ee = np.array([[0, 0, 1, 0.0329],
-                            [0, -1, 0, -0.0405],
-                            [1, 0, 0, 0.0632],
-                            [0, 0, 0, 1]])
-        
-        P_ee = np.dot(T_cam_ee, P_camera)
 
-        return P_ee
+        return P_camera
     
     # ReSubscribe to the topics:
     def re_subscribe(self):
