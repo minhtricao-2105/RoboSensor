@@ -456,7 +456,7 @@ classdef OmcronBaseClass < handle
         function isCollision = CheckSelfCollision(self)
             
             % Generate the ellipsoid for each link of the robot:
-            self.CreateEllipsoidLinks(true);
+            self.CreateEllipsoidLinks(false);
             
             % Get the number of link:
             numLinks = length(self.model.links);
