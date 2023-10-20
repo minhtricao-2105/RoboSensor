@@ -92,6 +92,8 @@ class Camera:
         
         # self.re_subscribe()
 
+        rospy.sleep(0.1)
+        
         if self.latest_rgb is None:
             print('No RGB or Depth Image image received')
             return None
@@ -166,6 +168,10 @@ class Camera:
             coordinates = (cx, cy, depth, angle, color_labels[color])
 
             detected_objects.append(coordinates)
-    
+
+        # Unsubscribe to the topics after finishing:
+        self.rgb_subscriber.unregister()
+        self.depth_subscriber.unregister()
+
         return detected_objects
       
