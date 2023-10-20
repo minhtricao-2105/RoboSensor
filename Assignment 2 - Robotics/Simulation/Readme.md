@@ -51,16 +51,17 @@ The contributors in this project are:
   Note: Detailed installation instructions for these tools can be found on their respective official websites.
 
   2. Running project:
-  *  Run the file named 'MainGui.mlapp'
-  *  CLick 'Load Simulate' to launch the environment
-  *  Click 'Run Mission' to start
-  *  Click 'E-Stop' to pause the process. Then toggle 'E-Stop' switch and click 'Resume' to continue
-  *  Click 'Cancel' to cancel mission
+    *  Run the file named 'MainGui.mlapp'
+    *  CLick 'Load Simulate' to launch the environment
+    *  Click 'Run Mission' to start
+    *  Click 'E-Stop' to pause the process. Then toggle 'E-Stop' switch and click 'Resume' to continue
+    *  Click 'Cancel' to cancel mission
   If you want to use Teach Pedant
-  *  Toggle 'Teach' switch
-  *  Click 'Teach TM5' or 'Teach TM12'
-  *  Click 'Start' to launch the model of robot
-  *  Use 'TCP Position' and 'TCP Orientation' to control the end of effector of robot
-  *  Toggle 'JS' switch to control the robot by Joint Position
-  *  Toggle 'TCP' switch to control the robot by input the position of end effector
+    *  Toggle 'Teach' switch
+    *  Click 'Teach TM5' or 'Teach TM12'
+    *  Click 'Start' to launch the model of robot
+    *  Use 'TCP Position' and 'TCP Orientation' to control the end of effector of robot
+    *  Toggle 'JS' switch to control the robot by Joint Position
+    *  Toggle 'TCP' switch to control the robot by input the position of end effector
     
+* Note: for real demonstration, please refer to our omcron_package
