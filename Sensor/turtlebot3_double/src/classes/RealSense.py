@@ -54,9 +54,9 @@ class RealSense:
         lower_yellow = np.array([20, 100, 100])  # Adjust these values as needed
         upper_yellow = np.array([30, 255, 255])  # Adjust these values as needed
 
-        lower_red  = np.array([5, 50, 50])
-        upper_red = np.array([15, 255, 255])
-        mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        lower_red  = np.array([160, 100, 20])
+        upper_red = np.array([179, 255, 255])
+        mask = cv2.inRange(hsv, lower_red, upper_red)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
