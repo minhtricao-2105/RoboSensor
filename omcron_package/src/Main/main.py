@@ -58,7 +58,7 @@ rospy.sleep(2)
 if __name__ == '__main__':
     print('Program is running...')
 
-    point = misison.detect_multi_object(camera)
+    point = camera.detect_object_modified()
 
     print(point)
     
