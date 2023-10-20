@@ -44,13 +44,13 @@ while not detected_objects_blue:
 
 for K in detected_objects_blue:
     # Convert to 3D point
-    x, y, depth, label = K
+    x, y, depth, angle, label = K
     
     point = camera.project_2D_to_3D(x, y, depth)
     point_array.append(point)
 
     # print(T)
-    # print(point)
+    print(angle)
 
 # # ////////////RED////////////
 # detected_objects_red = []
@@ -68,7 +68,7 @@ for K in detected_objects_blue:
 #     print(point)
 
 
-# # ////////////yellow///////////
+# ////////////yellow///////////
 # detected_objects_yellow = []
 
 # while not detected_objects_yellow:
@@ -76,13 +76,13 @@ for K in detected_objects_blue:
 
 # for K in detected_objects_yellow:
 #     # Convert to 3D point
-#     x, y, depth, label = K
+#     x, y, depth, angle, label = K
     
 #     point = camera.project_2D_to_3D(x, y, depth)
 #     point_array.append(point)
 
 #     # print(T)
-#     # print(point)
+#     print(angle)
 
 for i in range(len(point_array)):
     point_array[i][2] = point_array[i][2] - 0.18
