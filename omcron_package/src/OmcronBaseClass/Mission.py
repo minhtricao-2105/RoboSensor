@@ -65,6 +65,7 @@ class Mission:
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
+            print('Blue Done!')
 
         rospy.sleep(0.5)
 
@@ -80,9 +81,10 @@ class Mission:
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
+            print('Yellow Done!')
 
         rospy.sleep(0.5)
-        
+
         #--- Detect red object 
         detected_objects_red = []
 
@@ -95,6 +97,7 @@ class Mission:
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
+            print('Red Done!')
 
         for i in range(len(point)):
             point[i][2] = point[i][2] - 0.18
