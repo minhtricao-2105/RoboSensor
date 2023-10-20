@@ -49,3 +49,51 @@ class Mission:
         return all_points
 
         
+    def detect_multi_object_long(self, camera):
+        # Detected point container
+        point = []
+
+        #--- Detect blue object
+        detected_objects_blue = []
+
+        while not detected_objects_blue:
+            detected_objects_blue = camera.detect_object('blue')
+
+        for K in detected_objects_blue:
+            x, y, depth, angle, label = K
+            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp[3] = angle
+            point_temp[4] = label
+            point.append(point_temp)
+            
+        #--- Detect yellow object 
+        detected_objects_yellow = []
+
+        while not detected_objects_yellow:
+            detected_objects_yellow = camera.detect_object('yellow')
+
+        for K in detected_objects_yellow:
+            x, y, depth, angle, label = K
+            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp[3] = angle
+            point_temp[4] = label
+            point.append(point_temp)
+
+        #--- Detect red object 
+        detected_objects_red = []
+
+        while not detected_objects_red:
+            detected_objects_red = camera.detect_object('red')
+
+        for K in detected_objects_red:
+            x, y, depth, angle, label = K
+            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp[3] = angle
+            point_temp[4] = label
+            point.append(point_temp)
+
+        for i in range(len(point)):
+            point[i][2] = point[i][2] - 0.18
+        
+        return point
+        
