@@ -9,33 +9,43 @@ class Mission:
     def __init__(self):
         print("Update something")
 
-    def detect_multi_object(self, camera):
-        
-        colours_to_detect = ['blue', 'red', 'yellow']
-        detected_objects = []
-        blue_object = []
-        red_object = []
-        yellow_object = []
+    def detect_objects_by_color(self, camera, color):
+        """
+        Detect objects by color
 
-        for color in colours_to_detect:
-            if (color == 'blue'):
-                while not blue_object:
-                    blue_object = camera.detect_object(color)
-                    detected_objects.append(blue_object)
-            elif (color == 'red'):
-                while not red_object:
-                    red_object = camera.detect_object(color)
-                    detected_objects.append(red_object)
-            elif (color == 'yellow'):
-                while not yellow_object:
-                    yellow_object = camera.detect_object(color)
-                    detected_objects.append(yellow_object)
-                    
-        
+        Args:
+            camera (Camera): Camera object
+            color (string): Color of the object
+        """
+        detected_objects = []
+        while not detected_objects:
+            detected_objects = camera.detect_object(color)
+
+        points = []
+
         for obj in detected_objects:
-            for o in obj:
-                x, y, depth, label = o   
-                point = camera.project_2D_to_3D(x, y, depth)
-                print(f"Color Label: {label}, Point: {point}")
+            x, y, depth, angle, label = obj
+            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp[2] -= 0.18
+            point_temp[3] = label
+            point_temp[4] = angle
+            points.append(point_temp)
+
+        return points
+
+    def detect_multi_object(self, camera):
+        """
+        Detect multiple objects
+        
+        Args:
+            camera (Camera): Camera object
+        """
+        colors = ['blue', 'yellow', 'red']
+        all_points = []
+
+        for color in colors:
+            all_points.append(self.detect_objects_by_color(camera, color))
+
+        return all_points
 
         

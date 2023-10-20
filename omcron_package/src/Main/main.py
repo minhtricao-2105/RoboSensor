@@ -49,52 +49,19 @@ camera = Camera()
 # Setup the Gripper:
 gripper = Gripper()
 
+# Setup the Mission:
+misison = Mission()
+
 rospy.sleep(2)
 
 # Begin the main loop of the program:
 if __name__ == '__main__':
     print('Program is running...')
 
-    # Detected point container
-    point = []
-
-    #--- Detect blue object
-    detected_objects_blue = []
-
-    while not detected_objects_blue:
-        detected_objects_blue = camera.detect_object('blue')
-    
-    for K in detected_objects_blue:
-        # Convert to 3D point
-        x, y, depth, label = K
-        
-        point_temp = camera.project_2D_to_3D(x, y, depth)
-        point.append(point_temp)
-
-        # print(T)
-        # print(point)
-
-    #--- Detect yellow object 
-    detected_objects_yellow = []
-
-    while not detected_objects_yellow:
-        detected_objects_yellow = camera.detect_object('yellow')
-
-    for K in detected_objects_yellow:
-        # Convert to 3D point
-        x, y, depth, label = K
-        
-        point_temp = camera.project_2D_to_3D(x, y, depth)
-        point.append(point_temp)
-
-        # print(T)
-        # print(point)
-
-    for i in range(len(point)):
-        point[i][2] = point[i][2] - 0.18
+    point = misison.detect_multi_object(camera)
 
     print(point)
-
+    
     for position in point:
         # Move from current point to on top of the product
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
@@ -115,7 +82,7 @@ if __name__ == '__main__':
         # Move back to on top of drop off position
 
         # Move to home position 
-        # robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
+        robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
 
 
 
