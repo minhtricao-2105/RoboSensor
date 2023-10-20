@@ -56,49 +56,85 @@ class RealSense:
 
         lower_red  = np.array([160, 100, 20])
         upper_red = np.array([179, 255, 255])
-        mask = cv2.inRange(hsv, lower_red, upper_red)
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        for contour in contours:             
+        for i, c in enumerate(contours):
+            # Calculate the area of each contour:
+            area = cv2.contourArea(c)
 
-            if cv2.contourArea(contour) > 6789:
+            # Ignore contours that are too small or too large:
+            if area < 6789 or 100000 < area:
+                continue
 
-                M = cv2.moments(contour)                
+            rect = cv2.minAreaRect(c)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
 
-                cx = int(M['m10'] / M['m00'])                 
+            # Get the center, width, height, and angle of the bounding rectangle:
+            cx, cy = int(rect[0][0]), int(rect[0][1])
+            cv2.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
+            depth = 0.285
+            center = (cx, cy)
 
-                cy = int(M['m01'] / M['m00'])
+            rect = cv2.minAreaRect(c)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
 
-                cv2.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
+            # Draw the rotated rectangle
+            cv2.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
 
-                # Compute the minimum area bounding rectangle
-                rect = cv2.minAreaRect(contour)
-                box = cv2.boxPoints(rect)
-                box = np.int0(box)
+            angle = rect[-1]
 
-                # Draw the rotated rectangle
-                cv2.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
-
-                # Extract the angle of the rotated rectangle
-                angle = rect[-1]
-
-                print('with orientation angle:', angle)
+            if angle > 45:
+                angle -= 90
+            
+            print('with orientation angle:', angle)
 
 
+        # for contour in contours:             
 
-                # x, y, w, h = cv2.boundingRect(contour)
+        #     if cv2.contourArea(contour) > 6789:
 
-                # cv2.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        #         M = cv2.moments(contour)                
 
-                # cv2.drawContours(cv_image, contours, -1, (0, 255, 0), 2)  # (0, 255, 0) is the color, 2 is the thickness
+        #         cx = int(M['m10'] / M['m00'])                 
 
-                # self.depth = self.depth_image[cy][cx]
+        #         cy = int(M['m01'] / M['m00'])
 
-                # cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        #         cv2.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
 
-                print(self.depth)
+        #         # Compute the minimum area bounding rectangle
+        #         rect = cv2.minAreaRect(contour)
+        #         box = cv2.boxPoints(rect)
+        #         box = np.int0(box)
+
+        #         # Draw the rotated rectangle
+        #         cv2.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+
+        #         # Extract the angle of the rotated rectangle
+        #         angle = rect[-1]
+
+        #         if angle > 45:
+        #             angle -= 90
+
+        #         print('with orientation angle:', angle)
+
+
+
+        #         # x, y, w, h = cv2.boundingRect(contour)
+
+        #         # cv2.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        #         # cv2.drawContours(cv_image, contours, -1, (0, 255, 0), 2)  # (0, 255, 0) is the color, 2 is the thickness
+
+        #         # self.depth = self.depth_image[cy][cx]
+
+        #         # cv2.putText(cv_image, str(self.depth), (cx , cy ), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+        #         # print(self.depth)
 
         cv2.imshow('Detected Object', cv_image)
 
