@@ -27,8 +27,9 @@ class Camera:
         # Define the subcriber:
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
 
-        # Store latest RGB and Depth images
-        self.latest_rgb = None
+        # Wait for the first image:
+        first_img_msg = rospy.wait_for_message("/camera/color/image_raw", Image, timeout=10)
+        self.rgb_callback(first_img_msg) 
 
         # Image:
         self.cv_image = None
@@ -37,10 +38,7 @@ class Camera:
         
     # RGB Image Callback:
     def rgb_callback(self, msg):
-        try:
-            self.latest_rgb = msg
-        except Exception as e:
-            print(e)
+        self.latest_rgb = msg
             
     # Projecting a 3D point to a 2D image plane:
     def project_3D_to_2D(self, point_3D, transofromation_matrix):
@@ -84,8 +82,6 @@ class Camera:
 
     # Detect object
     def detect_object(self, color):
-        
-        self.rgb_callback()
 
         if self.latest_rgb is None:
             print('No RGB data')
@@ -161,26 +157,16 @@ class Camera:
             coordinates = (cx, cy, depth, angle, color_labels[color])
 
             detected_objects.append(coordinates)
-
-        # Unsubscribe to the topics after finishing:
-        self.rgb_subscriber.unregister()
-
         return detected_objects
     
     def detect_object_modified(self):
         
-        self.rgb_callback()
-
         if self.latest_rgb is None:
             print('No image received')
             return None
         
-        # Convert the image to OpenCV format:
         bridge = CvBridge()
         self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
-
-        rospy.sleep(0.1)
-
         hsv = cv.cvtColor(self.cv_image, cv.COLOR_BGR2HSV)
 
         # Define the lower and upper bounds of the colors
