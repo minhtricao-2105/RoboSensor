@@ -20,5 +20,5 @@ camera = Camera()
 
 mission = Mission(camera)
 
-point = mission.detect_multi_object_long()
+point = Camera.detect_object_modified(camera)
 print(point)
