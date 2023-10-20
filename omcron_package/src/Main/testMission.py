@@ -18,7 +18,7 @@ from OmcronBaseClass.Mission import*
 
 camera = Camera()
 
-mission = Mission()
+mission = Mission(camera)
 
-point = mission.detect_multi_object_long(camera)
+point = mission.detect_multi_object_long()
 print(point)

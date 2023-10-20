@@ -26,32 +26,34 @@ class Camera:
 
         # Define the subcriber:
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
-        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
+        # self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
         # Store latest RGB and Depth images
         self.latest_rgb = None
         self.latest_depth = None
 
         # Image:
-        cv_image = None
+        self.cv_image = None
         
     # RGB Image Callback:
     def rgb_callback(self, msg):
         try:
             self.latest_rgb = msg
+            bridge = CvBridge()
+            self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
         except Exception as e:
             print(e)
             
-    # Depth Image Callback:
-    def depth_callback(self, msg):
-        try:
-            self.latest_depth = msg
-            # Convert the image to OpenCV format:
-            bridge = CvBridge()
-            cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
+    # # Depth Image Callback:
+    # def depth_callback(self, msg):
+    #     try:
+    #         self.latest_depth = msg
+    #         # Convert the image to OpenCV format:
+    #         bridge = CvBridge()
+    #         self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
 
-        except Exception as e:
-            print(e)
+    #     except Exception as e:
+    #         print(e)
     
     # Projecting a 3D point to a 2D image plane:
     def project_3D_to_2D(self, point_3D, transofromation_matrix):
@@ -92,17 +94,12 @@ class Camera:
     # ReSubscribe to the topics:
     def re_subscribe(self):
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
-        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
+        # self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
     def detect_object(self, color):
         
-<<<<<<< HEAD
         self.re_subscribe()
-=======
-        # self.re_subscribe()
-
->>>>>>> e839c074b8ecc6539911ef8e8578560a8cff2fbc
         rospy.sleep(0.1)
 
         color_labels = {
@@ -174,7 +171,7 @@ class Camera:
 
         # Unsubscribe to the topics after finishing:
         self.rgb_subscriber.unregister()
-        self.depth_subscriber.unregister()
+        # self.depth_subscriber.unregister()
 
         return detected_objects
       

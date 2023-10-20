@@ -6,8 +6,9 @@ import copy
 import spatialgeometry.geom as collisionObj
 
 class Mission:
-    def __init__(self):
+    def __init__(self, camera):
         print("Update something")
+        self.cam = camera
 
     def detect_objects_by_color(self, camera, color):
         """
@@ -49,7 +50,7 @@ class Mission:
         return all_points
 
         
-    def detect_multi_object_long(self, camera):
+    def detect_multi_object_long(self):
         # Detected point container
         point = []
 
@@ -57,11 +58,11 @@ class Mission:
         detected_objects_blue = []
 
         while not detected_objects_blue:
-            detected_objects_blue = camera.detect_object('blue')
+            detected_objects_blue = self.cam.detect_object('blue')
 
         for K in detected_objects_blue:
             x, y, depth, angle, label = K
-            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp = self.cam.project_2D_to_3D(x, y, depth)
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
@@ -73,11 +74,11 @@ class Mission:
         detected_objects_yellow = []
 
         while not detected_objects_yellow:
-            detected_objects_yellow = camera.detect_object('yellow')
+            detected_objects_yellow = self.cam.detect_object('yellow')
 
         for K in detected_objects_yellow:
             x, y, depth, angle, label = K
-            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp = self.cam.project_2D_to_3D(x, y, depth)
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
@@ -89,11 +90,11 @@ class Mission:
         detected_objects_red = []
 
         while not detected_objects_red:
-            detected_objects_red = camera.detect_object('red')
+            detected_objects_red = self.cam.detect_object('red')
 
         for K in detected_objects_red:
             x, y, depth, angle, label = K
-            point_temp = camera.project_2D_to_3D(x, y, depth)
+            point_temp = self.cam.project_2D_to_3D(x, y, depth)
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
