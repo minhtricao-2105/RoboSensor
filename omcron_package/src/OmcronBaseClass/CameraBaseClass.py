@@ -39,8 +39,6 @@ class Camera:
     def rgb_callback(self, msg):
         try:
             self.latest_rgb = msg
-            self.point = self.detect_object_modified()
-
         except Exception as e:
             print(e)
             
@@ -83,19 +81,16 @@ class Camera:
     # ReSubscribe to the topics:
     def re_subscribe(self):
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
-        # self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
     def detect_object(self, color):
         
-        self.re_subscribe()
+        self.rgb_callback()
 
         if self.latest_rgb is None:
             print('No RGB data')
             return None
         
-        rospy.sleep(0.1)
-
         bridge = CvBridge()
         self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
 
@@ -174,6 +169,8 @@ class Camera:
     
     def detect_object_modified(self):
         
+        self.rgb_callback()
+
         if self.latest_rgb is None:
             print('No image received')
             return None
