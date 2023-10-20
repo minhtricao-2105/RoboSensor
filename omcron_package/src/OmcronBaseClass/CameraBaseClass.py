@@ -163,7 +163,7 @@ class Camera:
             detected_objects.append(coordinates)
 
         # Unsubscribe to the topics after finishing:
-        self.rgb_subscriber.unregister()
+        # self.rgb_subscriber.unregister()
 
         return detected_objects
     
