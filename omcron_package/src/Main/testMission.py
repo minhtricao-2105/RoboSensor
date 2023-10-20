@@ -16,13 +16,14 @@ from OmcronBaseClass.CameraBaseClass import*
 from OmcronBaseClass.Gripper import*
 from OmcronBaseClass.Mission import*
 
-camera = Camera()
+rospy.init_node('robot_node')
 
-mission = Mission(camera)
+camera = Camera()
 
 point = None
 
-while point is None:
-    point = camera.detect_object_modified()
-    
+point = camera.detect_object_modified()
+
 print(point)
+
+rospy.spin()
