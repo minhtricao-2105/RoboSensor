@@ -115,7 +115,7 @@ class Camera:
             lower_threshold  = np.array([0, 50, 50])
             upper_threshold = np.array([10, 255, 255])
         elif color == 'yellow':
-            lower_threshold  = np.array([20, 100, 100])
+            lower_threshold  = np.array([20, 190, 20])
             upper_threshold = np.array([30, 255, 255])
         elif color == 'green':
             lower_threshold  = np.array([35, 50, 50])
@@ -123,43 +123,85 @@ class Camera:
     
         mask = cv.inRange(hsv, lower_threshold, upper_threshold)
         
-        contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-
+        # contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        
+        # Find the contours of the object:
+        contours, _ = cv.findContours(mask, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+        
+        # Define the detected objects list:
         detected_objects = []
 
-        for contour in contours:
-            if cv.contourArea(contour) > 6789:  # Arbitrary threshold
-                M = cv.moments(contour)
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
-                depth = 0.285
+        for i, c in enumerate(contours):
+            # Calculate the area of each contour:
+            area = cv.contourArea(c)
 
-                # Draw a circle around the detected object
-                cv.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
+            # Ignore contours that are too small or too large:
+            if area < 6789 or 100000 < area:
+                continue
 
-                # Compute the minimum area bounding rectangle
-                rect = cv.minAreaRect(contour)
-                box = cv.boxPoints(rect)
-                box = np.int0(box)
+            rect = cv.minAreaRect(c)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)
 
-                # Draw the rotated rectangle
-                cv.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+            # Get the center, width, height, and angle of the bounding rectangle:
+            cx, cy = int(rect[0][0]), int(rect[0][1])
+            depth = 0.285
+            center = (cx, cy)
+            width = int(rect[1][0])
+            height = int(rect[1][1])
+            angle = int(rect[2])
 
-                # Extract the angle of the rotated rectangle
-                angle = rect[-1]
+            if width < height:
+                angle = 90 - angle
+            else:
+                angle = -angle
 
-                # Optional: Draw bounding rectangle
-                # x, y, w, h = cv.boundingRect(contour)
-                # cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            # Define label:
+            label = "  Rotation Angle: " + str(angle) + " degrees"
+            textbox = cv.rectangle(cv_image, (center[0]-35, center[1]-25), (center[0] + 295, center[1] + 10), (255,255,255), -1)
+            cv.putText(cv_image, label, (center[0]-50, center[1]), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,0), 1, cv.LINE_AA)
+            cv.drawContours(cv_image,[box],0,(0,0,255),2)
 
-                print('Detected Object at: ', cx, cy, depth, angle)
+            coordinates = (cx, cy, depth, angle, color_labels[color])
 
-                coordinates = (cx, cy, depth, color_labels[color])
+            detected_objects.append(coordinates)
 
-                detected_objects.append(coordinates)
+        cv.imshow('RGB image', cv_image)
+        cv.waitKey(1)            
 
-                # cv.imshow('RGB image', cv_image)
-                # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
+        # for contour in contours:
+        #     if cv.contourArea(contour) > 6789:  # Arbitrary threshold
+        #         M = cv.moments(contour)
+        #         cx = int(M['m10'] / M['m00'])
+        #         cy = int(M['m01'] / M['m00'])
+        #         depth = 0.285
+
+        #         # Draw a circle around the detected object
+        #         cv.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
+
+        #         # Compute the minimum area bounding rectangle
+        #         rect = cv.minAreaRect(contour)
+        #         box = cv.boxPoints(rect)
+        #         box = np.int0(box)
+
+        #         # Draw the rotated rectangle
+        #         cv.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+
+        #         # Extract the angle of the rotated rectangle
+        #         angle = rect[-1]
+
+        #         # Optional: Draw bounding rectangle
+        #         # x, y, w, h = cv.boundingRect(contour)
+        #         # cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        #         print('Detected Object at: ', cx, cy, depth, angle)
+
+        #         coordinates = (cx, cy, depth, color_labels[color])
+
+        #         detected_objects.append(coordinates)
+
+        #         # cv.imshow('RGB image', cv_image)
+        #         # cv.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
 
         return detected_objects
       
