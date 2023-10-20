@@ -8,7 +8,7 @@ import math
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from apriltag_ros.msg import AprilTagDetectionArray  # Import AprilTag messages
+# from apriltag_ros.msg import AprilTagDetectionArray  # Import AprilTag messages
 
 class RealSense:
 
@@ -56,14 +56,14 @@ class RealSense:
 
         lower_red  = np.array([0, 50, 50])
         upper_red = np.array([10, 255, 255])
-        mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
+        mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         # Find contours:
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         for contour in contours:             
 
-            if cv2.contourArea(contour) > 400:
+            if cv2.contourArea(contour) > 6789:
 
                 M = cv2.moments(contour)                
 
@@ -85,9 +85,9 @@ class RealSense:
 
                 print(self.depth)
 
-                cv2.imshow('Detected Object', cv_image)
+        cv2.imshow('Detected Object', cv_image)
 
-                cv2.waitKey(1)
+        cv2.waitKey(1)
 
     def aruco_callback(self, msg):
         rospy.sleep(1.0)

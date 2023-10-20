@@ -66,7 +66,7 @@ class Camera:
 
         # translation of camera 
         tx = -0.0329
-        ty = 0.0405
+        ty = 0.0555
         tz = -0.0632
             
         # Calculate the 3D point (with end of effector frame)
@@ -89,7 +89,7 @@ class Camera:
 
     # Detect object
     def detect_object(self, color):
-        if self.latest_rgb is None or self.latest_depth is None:
+        if self.latest_rgb is None:
             print('No RGB or Depth Image image received')
             return None
 
@@ -102,7 +102,6 @@ class Camera:
         # Convert the image to OpenCV format:
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
-        cv_depth = bridge.imgmsg_to_cv2(self.latest_depth, "passthrough")
 
         # Convert the image to HSV format:
         hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
@@ -129,7 +128,7 @@ class Camera:
         detected_objects = []
 
         for contour in contours:
-            if cv.contourArea(contour) > 400:  # Arbitrary threshold
+            if cv.contourArea(contour) > 6789:  # Arbitrary threshold
                 M = cv.moments(contour)
                 cx = int(M['m10'] / M['m00'])
                 cy = int(M['m01'] / M['m00'])

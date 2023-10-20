@@ -39,6 +39,7 @@ try:
     robot.update_robot_position(q_home)
     robot.set_up_moveIt(0.1)
     robot.arm.go(q_home, wait=True)
+    print("Robot is in the home position.")
 except:
     print("No Moveit Driver is running or something went wrong...")
 
@@ -48,6 +49,42 @@ camera = Camera()
 # Setup the Gripper:
 gripper = Gripper()
 
+rospy.sleep(2)
+
 # Begin the main loop of the program:
 if __name__ == '__main__':
     print('Program is running...')
+
+    detected_objects_blue = []
+
+    while not detected_objects_blue:
+        detected_objects_blue = camera.detect_object('blue')
+    
+    point = []
+    
+    for K in detected_objects_blue:
+        # Convert to 3D point
+        x, y, depth, label = K
+        
+        point_temp = camera.project_2D_to_3D(x, y, depth)
+        point.append(point_temp)
+
+        # print(T)
+        # print(point)
+    
+    point_1_ee = point[0]
+    point_1_ee[2] = point_1_ee[2] - 0.18
+    
+    point_2_ee = point[1]
+    point_2_ee[2] = point_2_ee[2] - 0.18
+
+    print(point_1_ee)
+    
+
+
+    robot.move_ee_up_down(env, delta_x=-point_1_ee [0], delta_y=point_1_ee [1], delta_z= -point_1_ee [2],real_robot=True)
+
+    robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
+
+    robot.move_ee_up_down(env, delta_x=-point_2_ee [0], delta_y=point_2_ee [1], delta_z= -point_2_ee [2],real_robot=True)
+
