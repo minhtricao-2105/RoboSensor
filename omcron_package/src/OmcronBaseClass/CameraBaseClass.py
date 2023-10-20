@@ -97,7 +97,12 @@ class Camera:
     # Detect object
     def detect_object(self, color):
         
+<<<<<<< HEAD
         self.re_subscribe()
+=======
+        # self.re_subscribe()
+
+>>>>>>> e839c074b8ecc6539911ef8e8578560a8cff2fbc
         rospy.sleep(0.1)
 
         color_labels = {
