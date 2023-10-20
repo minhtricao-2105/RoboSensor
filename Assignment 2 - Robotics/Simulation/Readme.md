@@ -40,3 +40,27 @@ The contributors in this project are:
 ### Hardware System:
 *  UR3 robot
 *  Camera Realsense D435
+
+## Installation and Setup Guide
+### Simulation Environment
+  1. Prerequisites:
+  Before diving into the project setup, ensure you have the following prerequisites installed:
+     *  Matlab: Our project heavily relies on Matlab functionalities, we are currently using Matlab 2023a version.
+     *  Peter Corke's Modified Robotics Toolbox: This should be provided by UTS teaching staff.
+     *  Following Matlab's toolbox: Simulink, Simulink Real-Time, Simulink 3D Animation, Optimization Toolbox, Robotics System Toolbox, ROS Toolbox, Statistics and Machine Learning Toolbox, and the Symbolic Math Toolbox.
+  Note: Detailed installation instructions for these tools can be found on their respective official websites.
+
+  2. Running project:
+  *  Run the file named 'MainGui.mlapp'
+  *  CLick 'Load Simulate' to launch the environment
+  *  Click 'Run Mission' to start
+  *  Click 'E-Stop' to pause the process. Then toggle 'E-Stop' switch and click 'Resume' to continue
+  *  Click 'Cancel' to cancel mission
+  If you want to use Teach Pedant
+  *  Toggle 'Teach' switch
+  *  Click 'Teach TM5' or 'Teach TM12'
+  *  Click 'Start' to launch the model of robot
+  *  Use 'TCP Position' and 'TCP Orientation' to control the end of effector of robot
+  *  Toggle 'JS' switch to control the robot by Joint Position
+  *  Toggle 'TCP' switch to control the robot by input the position of end effector
+    
