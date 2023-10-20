@@ -27,8 +27,8 @@ class Mission:
             x, y, depth, angle, label = obj
             point_temp = camera.project_2D_to_3D(x, y, depth)
             point_temp[2] -= 0.18
-            point_temp[3] = label
-            point_temp[4] = angle
+            point_temp[4] = label
+            point_temp[3] = angle
             points.append(point_temp)
 
         return points

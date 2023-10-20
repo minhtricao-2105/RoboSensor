@@ -115,7 +115,7 @@ class Camera:
             lower_threshold  = np.array([160, 100, 20])
             upper_threshold = np.array([179, 255, 255])
         elif color == 'yellow':
-            lower_threshold  = np.array([20, 190, 20])
+            lower_threshold  = np.array([20, 100, 100])
             upper_threshold = np.array([30, 255, 255])
         elif color == 'green':
             lower_threshold  = np.array([35, 50, 50])
