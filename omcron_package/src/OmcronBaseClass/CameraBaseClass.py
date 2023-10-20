@@ -31,6 +31,9 @@ class Camera:
         # Store latest RGB and Depth images
         self.latest_rgb = None
         self.latest_depth = None
+
+        # Image:
+        cv_image = None
         
     # RGB Image Callback:
     def rgb_callback(self, msg):
@@ -43,6 +46,10 @@ class Camera:
     def depth_callback(self, msg):
         try:
             self.latest_depth = msg
+            # Convert the image to OpenCV format:
+            bridge = CvBridge()
+            cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
+
         except Exception as e:
             print(e)
     
@@ -91,12 +98,7 @@ class Camera:
     def detect_object(self, color):
         
         self.re_subscribe()
-
         rospy.sleep(0.1)
-        
-        if self.latest_rgb is None:
-            print('No RGB or Depth Image image received')
-            return None
 
         color_labels = {
             'blue': 1,
@@ -104,12 +106,8 @@ class Camera:
             'yellow': 3,
         }
 
-        # Convert the image to OpenCV format:
-        bridge = CvBridge()
-        cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
-
         # Convert the image to HSV format:
-        hsv = cv.cvtColor(cv_image, cv.COLOR_BGR2HSV)
+        hsv = cv.cvtColor(self.cv_image, cv.COLOR_BGR2HSV)
 
         # Define the lower and upper bounds of the colors
         # -- Define the lower and upper bounds of the blue color
@@ -157,7 +155,7 @@ class Camera:
             box = np.int0(box)
 
             # Draw the rotated rectangle
-            cv.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+            cv.drawContours(self.cv_image, [box], 0, (0, 255, 0), 2)
 
             # Extract the angle of the rotated rectangle
             angle = rect[-1]
