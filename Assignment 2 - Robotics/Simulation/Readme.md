@@ -12,4 +12,5 @@ Simulated within the Matlab environment, our project envisions a dynamic workspa
 
 We also created the GUI for user to interact with the system. The GUI has advanced “teach” functionality that allows jogging the robot. It includes both individual joint movements  plus enable [x,y,z] Cartesian movements. A joystick is can be used as an additional control method beside GUI buttons presses.
 
-In real robot demonstration, ...
+During a live robot demonstration, we employed a UR3 robot to execute a pick and place task. Due to the unavailability of two robots simultaneously, we devised an efficient workflow. Initially, we positioned six dice (comprising two blue, two red, and two yellow ones) on the table. To facilitate the process, we integrated an RGB camera to accurately detect the color of each dice, subsequently utilizing image plane coordinates to compute the translation of each dice in the camera's frame. Utilizing the acquired data, we transformed the target points back to the robot's end effector, enabling us to utilize the RMRC (Robot Motion Planning and Control) technique to generate a path from the current pose to the desired pose. In the final stage, leveraging the color information detected by the camera, the UR3 robot efficiently move the dice to pre-defined locations corresponding to their respective colors.
+
