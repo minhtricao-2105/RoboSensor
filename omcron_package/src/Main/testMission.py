@@ -20,5 +20,9 @@ camera = Camera()
 
 mission = Mission(camera)
 
-point = camera.detect_object_modified()
+point = None
+
+while point is None:
+    point = camera.detect_object_modified()
+    
 print(point)

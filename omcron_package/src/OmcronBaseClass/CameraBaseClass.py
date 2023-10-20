@@ -26,35 +26,24 @@ class Camera:
 
         # Define the subcriber:
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
-        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
         # Store latest RGB and Depth images
         self.latest_rgb = None
-        self.latest_depth = None
 
         # Image:
         self.cv_image = None
+
+        self.point = None
         
     # RGB Image Callback:
     def rgb_callback(self, msg):
         try:
             self.latest_rgb = msg
-            bridge = CvBridge()
-            self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
-        except Exception as e:
-            print(e)
-            
-    # Depth Image Callback:
-    def depth_callback(self, msg):
-        try:
-            self.latest_depth = msg
-            # Convert the image to OpenCV format:
-            bridge = CvBridge()
-            cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
+            self.point = self.detect_object_modified()
 
         except Exception as e:
             print(e)
-    
+            
     # Projecting a 3D point to a 2D image plane:
     def project_3D_to_2D(self, point_3D, transofromation_matrix):
         
@@ -94,17 +83,22 @@ class Camera:
     # ReSubscribe to the topics:
     def re_subscribe(self):
         self.rgb_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self.rgb_callback)
-        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
+        # self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self.depth_callback)
 
     # Detect object
     def detect_object(self, color):
         
         self.re_subscribe()
-        rospy.sleep(0.1)
 
         if self.latest_rgb is None:
-            print('No RGB or Depth Image image received')
+            print('No RGB data')
             return None
+        
+        rospy.sleep(0.1)
+
+        bridge = CvBridge()
+        self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
+
 
         color_labels = {
             'blue': 1,
@@ -175,12 +169,19 @@ class Camera:
 
         # Unsubscribe to the topics after finishing:
         self.rgb_subscriber.unregister()
-        self.depth_subscriber.unregister()
 
         return detected_objects
     
     def detect_object_modified(self):
         
+        if self.latest_rgb is None:
+            print('No image received')
+            return None
+        
+        # Convert the image to OpenCV format:
+        bridge = CvBridge()
+        self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
+
         rospy.sleep(0.1)
 
         hsv = cv.cvtColor(self.cv_image, cv.COLOR_BGR2HSV)
