@@ -33,12 +33,14 @@ class Camera:
         self.latest_depth = None
 
         # Image:
-        cv_image = None
+        self.cv_image = None
         
     # RGB Image Callback:
     def rgb_callback(self, msg):
         try:
             self.latest_rgb = msg
+            bridge = CvBridge()
+            self.cv_image = bridge.imgmsg_to_cv2(self.latest_rgb, "bgr8")
         except Exception as e:
             print(e)
             
