@@ -90,7 +90,7 @@ class Camera:
     # Detect object
     def detect_object(self, color):
         
-        self.re_subscribe()
+        # self.re_subscribe()
 
         if self.latest_rgb is None:
             print('No RGB or Depth Image image received')
