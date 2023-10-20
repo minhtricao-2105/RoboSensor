@@ -102,6 +102,10 @@ class Camera:
         self.re_subscribe()
         rospy.sleep(0.1)
 
+        if self.latest_rgb is None:
+            print('No RGB or Depth Image image received')
+            return None
+
         color_labels = {
             'blue': 1,
             'red': 2,
