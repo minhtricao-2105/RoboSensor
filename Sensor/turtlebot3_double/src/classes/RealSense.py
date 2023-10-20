@@ -52,10 +52,10 @@ class RealSense:
         upper_blue = np.array([140, 255, 255])
 
         lower_yellow = np.array([20, 100, 100])  # Adjust these values as needed
-        upper_yellow = np.array([40, 255, 255])  # Adjust these values as needed
+        upper_yellow = np.array([30, 255, 255])  # Adjust these values as needed
 
-        lower_red  = np.array([0, 50, 50])
-        upper_red = np.array([10, 255, 255])
+        lower_red  = np.array([5, 50, 50])
+        upper_red = np.array([15, 255, 255])
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
         # Find contours:
@@ -73,9 +73,24 @@ class RealSense:
 
                 cv2.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
 
-                x, y, w, h = cv2.boundingRect(contour)
+                # Compute the minimum area bounding rectangle
+                rect = cv2.minAreaRect(contour)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
 
-                cv2.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                # Draw the rotated rectangle
+                cv2.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+
+                # Extract the angle of the rotated rectangle
+                angle = rect[-1]
+
+                print('with orientation angle:', angle)
+
+
+
+                # x, y, w, h = cv2.boundingRect(contour)
+
+                # cv2.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
 
                 # cv2.drawContours(cv_image, contours, -1, (0, 255, 0), 2)  # (0, 255, 0) is the color, 2 is the thickness
 

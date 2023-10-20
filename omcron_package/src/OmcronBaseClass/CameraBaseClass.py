@@ -137,11 +137,22 @@ class Camera:
                 # Draw a circle around the detected object
                 cv.circle(cv_image, (cx, cy), 10, (0, 0, 255), 2)
 
-                # Optional: Draw bounding rectangle
-                x, y, w, h = cv.boundingRect(contour)
-                cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                # Compute the minimum area bounding rectangle
+                rect = cv.minAreaRect(contour)
+                box = cv.boxPoints(rect)
+                box = np.int0(box)
 
-                print('Detected Object at: ', cx, cy, depth)
+                # Draw the rotated rectangle
+                cv.drawContours(cv_image, [box], 0, (0, 255, 0), 2)
+
+                # Extract the angle of the rotated rectangle
+                angle = rect[-1]
+
+                # Optional: Draw bounding rectangle
+                # x, y, w, h = cv.boundingRect(contour)
+                # cv.rectangle(cv_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+                print('Detected Object at: ', cx, cy, depth, angle)
 
                 coordinates = (cx, cy, depth, color_labels[color])
 

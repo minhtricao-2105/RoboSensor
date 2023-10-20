@@ -35,6 +35,8 @@ robot = UR3e()
 # Setup the Camera:
 camera = Camera()
 
+point_array = []
+
 detected_objects_blue = []
 
 while not detected_objects_blue:
@@ -45,9 +47,10 @@ for K in detected_objects_blue:
     x, y, depth, label = K
     
     point = camera.project_2D_to_3D(x, y, depth)
+    point_array.append(point)
 
     # print(T)
-    print(point)
+    # print(point)
 
 # # ////////////RED////////////
 # detected_objects_red = []
@@ -66,19 +69,24 @@ for K in detected_objects_blue:
 
 
 # # ////////////yellow///////////
-detected_objects_yellow = []
+# detected_objects_yellow = []
 
-while not detected_objects_yellow:
-    detected_objects_yellow = camera.detect_object('yellow')
+# while not detected_objects_yellow:
+#     detected_objects_yellow = camera.detect_object('yellow')
 
-for K in detected_objects_yellow:
-    # Convert to 3D point
-    x, y, depth, label = K
+# for K in detected_objects_yellow:
+#     # Convert to 3D point
+#     x, y, depth, label = K
     
-    point = camera.project_2D_to_3D(x, y, depth)
+#     point = camera.project_2D_to_3D(x, y, depth)
+#     point_array.append(point)
 
-    # print(T)
-    print(point)
+#     # print(T)
+#     # print(point)
+
+for i in range(len(point_array)):
+    point_array[i][2] = point_array[i][2] - 0.18
+print(point_array)
 
 # robot.move_ee_up_down(env, delta_x=, delta_y=dy, delta_z=dz,real_robot=False)
 
