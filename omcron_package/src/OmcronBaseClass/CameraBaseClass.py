@@ -163,9 +163,6 @@ class Camera:
             coordinates = (cx, cy, depth, angle, color_labels[color])
 
             detected_objects.append(coordinates)
-
-        cv.imshow('RGB image', cv_image)
-        cv.waitKey(1)            
-
+    
         return detected_objects
       

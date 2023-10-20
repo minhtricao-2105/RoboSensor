@@ -65,7 +65,9 @@ class Mission:
             point_temp[3] = angle
             point_temp[4] = label
             point.append(point_temp)
-            
+
+        rospy.sleep(0.5)
+
         #--- Detect yellow object 
         detected_objects_yellow = []
 
@@ -79,6 +81,8 @@ class Mission:
             point_temp[4] = label
             point.append(point_temp)
 
+        rospy.sleep(0.5)
+        
         #--- Detect red object 
         detected_objects_red = []
 
