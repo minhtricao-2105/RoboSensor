@@ -36,3 +36,28 @@ $ catkin_make
 # activate the workspace (ie: source it)
 $ source devel/setup.bash 
 ```
+
+### Set up an UR robot for ur_robot_driver
+Extract calibration information
+
+Each UR robot is calibrated inside the factory giving exact forward and inverse kinematics. To also make use of this in ROS, you first have to extract the calibration information from the robot.
+
+Though this step is not necessary to control the robot using this driver, it is highly recommended to do so, as otherwise endeffector positions might be off in the magnitude of centimeters.
+
+For this, there exists a helper script:
+```
+$ roslaunch ur_calibration calibration_correction.launch \
+  robot_ip:=<robot_ip> target_filename:="${HOME}/my_robot_calibration.yaml" 
+```
+For the parameter robot_ip insert the IP address on which the ROS pc can reach the robot. As target_filename provide an absolute path where the result will be saved to.
+
+#### Quick start
+1. Open the terminal and launch the driver:
+   ```
+   $ roslaunch ur_robot_driver <robot_type>_bringup.launch robot_ip:=192.168.56.101
+   ```
+   where <robot_type> is one of ur3, ur5, ur10, ur3e, ur5e, ur10e, ur16e. Note that in this example we load the calibration parameters for the robot "ur10_example".
+2. On the robot controller, select Program -> external control -> create a program and launch the program on the robot
+
+Note: please make sure that the external control IP should be the HOST IP (YOUR COMPUTER IP)
+For more information and additional package, please find it in here: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver#readme
