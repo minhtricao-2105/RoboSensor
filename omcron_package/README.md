@@ -62,19 +62,19 @@ For the parameter robot_ip insert the IP address on which the ROS pc can reach t
 Note: please make sure that the external control IP should be the HOST IP (YOUR COMPUTER IP)
 For more information and additional package, please find it in here: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver#readme
 
-### Universal_Robot_Driver_Moveit
+## Universal_Robot_Driver_Moveit
 
-#### Description
+### Description
 There are two different ways to install the packages in this repository. The following sections detail installing the packages using the binary distribution and building them from source in a Catkin workspace.
 
-#### First method: using apt (Ubuntu, Debian)
+### First method: using apt (Ubuntu, Debian)
 On supported Linux distributions (Ubuntu, 18.04 (Bionic) and 20.04 (Focal), i386 and amd64) and ROS versions:
 ```
 sudo apt-get install ros-$ROS_DISTRO-universal-robots
 ```
 replace $ROS_DISTRO with melodic or noetic, depending on which ROS version you have installed.
 
-#### Second method: Building from Source 
+### Second method: Building from Source 
 The following instructions assume that a Catkin workspace has been created at $HOME/catkin_ws and that the source space is at $HOME/catkin_ws/src. Update paths appropriately if they are different on the build machine.
 
 In all other cases the packages will have to be build from sources in a Catkin workspace:
@@ -96,7 +96,7 @@ catkin_make
 source $HOME/catkin_ws/devel/setup.bash
 ```
 
-#### Usage with REAL HARDWARE
+### Usage with REAL HARDWARE
 For setting up the MoveIt! nodes to allow motion planning run e.g.:
 ```
 roslaunch ur5_moveit_config moveit_planning_execution.launch
@@ -107,7 +107,7 @@ roslaunch ur5_moveit_config moveit_rviz.launch
 ```
 Note: replace ur5 to your appropriate robot platform(ur3, ur3e, ur10,...)
 
-#### Usage with Gazebo simulation
+### Usage with Gazebo simulation
 To bring up the simulated robot in Gazebo, run:
 ```
 roslaunch ur_gazebo ur5_bringup.launch
@@ -123,15 +123,15 @@ For starting up RViz with a configuration including the MoveIt! Motion Planning 
 roslaunch ur5_moveit_config moveit_rviz.launch
 ```
 
-### OnRobot_RG2_Gripper_Driver
+## OnRobot_RG2_Gripper_Driver
 This package was written by Harada Laboratory from Osaka University, if you have some question, please ask them and here is the link of their github: https://github.com/Osaka-University-Harada-Laboratory/onrobot
 
-#### Dependency
+### Dependency
   * pymodbus==2.5.3
   * roboticsgroup/roboticsgroup_upatras_gazebo_plugins
 Note: the pymodbus version is really important. please make sure you have a correct version.
 
-#### Installation
+### Installation
 ```
 cd catkin_ws/src
 git clone https://github.com/takuya-ki/onrobot.git --depth 1
@@ -142,7 +142,7 @@ sudo apt install ros-noetic-ros-control ros-noetic-ros-controllers
 catkin build -DPYTHON_EXECUTABLE=/usr/bin/python3
 ```
 
-#### Send motion command
+### Send motion command
 Interactive mode
 ```
 roslaunch onrobot_rg_control bringup.launch gripper:=[rg2/rg6] ip:=XXX.XXX.XXX.XXX
@@ -158,15 +158,15 @@ rosservice call /onrobot_rg/set_command '!!str 300'
 rosservice call /onrobot_rg/restart_power
 ```
 
-#### Simulation
+### Simulation
 
-##### Display mode
+#### Display mode
 ```
 roslaunch onrobot_rg_description disp_rg6_model.launch
 roslaunch onrobot_rg_description disp_rg2_model.launch
 ```
 
-##### Gazebo simualtion
+#### Gazebo simualtion
 ```
 roslaunch onrobot_rg_gazebo bringup_rg6_gazebo.launch
 rostopic pub -1 /onrobot_rg6/joint_position_controller/command std_msgs/Float64 "data: 0.5"
