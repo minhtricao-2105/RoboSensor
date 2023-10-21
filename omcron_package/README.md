@@ -174,3 +174,20 @@ roslaunch onrobot_rg_gazebo bringup_rg2_gazebo.launch
 rostopic pub -1 /onrobot_rg2/joint_position_controller/command std_msgs/Float64 "data: 0.5"
 ```
 
+## Peter Corke Robotics toolbox for Python:
+### Installation
+```
+pip3 install roboticstoolbox-python
+```
+Available options are: collision install collision checking with pybullet Put the options in a comma separated list like
+```
+pip3 install roboticstoolbox-python[optionlist]
+```
+Install Swift for simulate the cobot with the toolbox:
+```
+git clone https://github.com/petercorke/robotics-toolbox-python.git
+cd robotics-toolbox-python
+pip3 install -e .
+```
+### Reference
+Example and tutorial how to use the toolbox can be found in here: https://github.com/petercorke/robotics-toolbox-python
