@@ -62,7 +62,7 @@ For the parameter robot_ip insert the IP address on which the ROS pc can reach t
 Note: please make sure that the external control IP should be the HOST IP (YOUR COMPUTER IP)
 For more information and additional package, please find it in here: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver#readme
 
-## Universal_Robot_Driver_Moveit
+## Universal_Robots_Driver_Moveit:
 
 ### Description
 There are two different ways to install the packages in this repository. The following sections detail installing the packages using the binary distribution and building them from source in a Catkin workspace.
@@ -123,7 +123,7 @@ For starting up RViz with a configuration including the MoveIt! Motion Planning 
 roslaunch ur5_moveit_config moveit_rviz.launch
 ```
 
-## OnRobot_RG2_Gripper_Driver
+## OnRobot_RG2_Gripper_Driver:
 This package was written by Harada Laboratory from Osaka University, if you have some question, please ask them and here is the link of their github: https://github.com/Osaka-University-Harada-Laboratory/onrobot
 
 ### Dependency
