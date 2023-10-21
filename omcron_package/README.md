@@ -61,3 +61,64 @@ For the parameter robot_ip insert the IP address on which the ROS pc can reach t
 
 Note: please make sure that the external control IP should be the HOST IP (YOUR COMPUTER IP)
 For more information and additional package, please find it in here: https://github.com/UniversalRobots/Universal_Robots_ROS_Driver#readme
+
+### Universal_Robot_Driver_Moveit
+
+#### Description
+There are two different ways to install the packages in this repository. The following sections detail installing the packages using the binary distribution and building them from source in a Catkin workspace.
+
+#### First method: using apt (Ubuntu, Debian)
+On supported Linux distributions (Ubuntu, 18.04 (Bionic) and 20.04 (Focal), i386 and amd64) and ROS versions:
+```
+sudo apt-get install ros-$ROS_DISTRO-universal-robots
+```
+replace $ROS_DISTRO with melodic or noetic, depending on which ROS version you have installed.
+
+#### Second method: Building from Source 
+The following instructions assume that a Catkin workspace has been created at $HOME/catkin_ws and that the source space is at $HOME/catkin_ws/src. Update paths appropriately if they are different on the build machine.
+
+In all other cases the packages will have to be build from sources in a Catkin workspace:
+```
+$ cd $HOME/catkin_ws/src
+
+# retrieve the sources (replace '$ROS_DISTRO' with the ROS version you are using)
+$ git clone -b $ROS_DISTRO-devel https://github.com/ros-industrial/universal_robot.git
+$ cd $HOME/catkin_ws
+
+# checking dependencies (again: replace '$ROS_DISTRO' with the ROS version you are using)
+$ rosdep update
+$ rosdep install --rosdistro $ROS_DISTRO --ignore-src --from-paths src
+
+# building
+catkin_make
+
+# activate this workspace
+source $HOME/catkin_ws/devel/setup.bash
+```
+
+#### Usage with REAL HARDWARE
+For setting up the MoveIt! nodes to allow motion planning run e.g.:
+```
+roslaunch ur5_moveit_config moveit_planning_execution.launch
+```
+For starting up RViz with a configuration including the MoveIt! Motion Planning plugin run:
+```
+roslaunch ur5_moveit_config moveit_rviz.launch
+```
+Note: replace ur5 to your appropriate robot platform(ur3, ur3e, ur10,...)
+
+#### Usage with Gazebo simulation
+To bring up the simulated robot in Gazebo, run:
+```
+roslaunch ur_gazebo ur5_bringup.launch
+```
+
+MoveIt! with a simulated robot Again, you can use MoveIt! to control the simulated robot.
+For setting up the MoveIt! nodes to allow motion planning run:
+```
+roslaunch ur5_moveit_config moveit_planning_execution.launch sim:=true
+```
+For starting up RViz with a configuration including the MoveIt! Motion Planning plugin run:
+```
+roslaunch ur5_moveit_config moveit_rviz.launch
+```
