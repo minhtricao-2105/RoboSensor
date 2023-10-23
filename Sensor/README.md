@@ -16,12 +16,14 @@ The contributors in this project are:
     *  Control the guider.
     *  Apply P Controller for the Follower.
     *  Testing algorithm in the acutal TurtleBot.
+    *  Individual contribution: 50%.
       
-  2.  Anh Tung Nguyen - Student ID Number: 14072286:
+  3.  Anh Tung Nguyen - Student ID Number: 14072286:
     *  Creating launch file.
     *  Control the follower.
     *  Apply Line of best fit Approach for the Follower.
     *  Testing algorithm in the acutal TurtleBot.
+    *  Individual contribution: 50%.
 
 ## Requirement:
 ### Software System:
