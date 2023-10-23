@@ -58,16 +58,42 @@ rospy.sleep(2)
 if __name__ == '__main__':
     print('Program is running...')
 
-    point = camera.detect_object_modified()
+    detected_objects = camera.detect_object_modified()
 
-    print(point)
+    point_array = []
+    angle_array = []
     
-    for position in point:
+    for K in detected_objects:
+        # Convert to 3D point
+        x, y, depth, angle, label = K
+
+        point = camera.project_2D_to_3D(x, y, depth)
+        point_array.append(point)
+        angle_array.append(angle)
+
+    print(point_array)
+    
+    i = 0
+
+    for position in point_array:
         # Move from current point to on top of the product
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
 
+        # Get current Q and change the orientation of the ee
+        currentQ = robot.currentQ
+        currentQ[5] = angle_array[i]
+        robot.set_up_moveIt(0.1)
+        robot.arm.go(currentQ, wait=True)
+        i = i + 1
+
+        # Open gripper
+        gripper.OpenGripper()
+
         # Move to position to pick up the product
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2],real_robot=True)
+
+        # Close gripper
+        gripper.CloseGripper()
 
         # Move back to on top of the product
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
@@ -93,3 +119,4 @@ if __name__ == '__main__':
 
     # robot.move_ee_up_down(env, delta_x=-point_2_ee [0], delta_y=point_2_ee [1], delta_z= -point_2_ee [2],real_robot=True)
 
+rospy.spin()
