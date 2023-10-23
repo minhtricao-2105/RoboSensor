@@ -58,13 +58,6 @@ rospy.sleep(2)
 if __name__ == '__main__':
     print('Program is running...')
 
-<<<<<<< HEAD
-    point = camera.detect_object_modified()
-
-    print(point)
-
-    for position in point:
-=======
     detected_objects = camera.detect_object_modified()
 
     point_array = []
@@ -83,7 +76,6 @@ if __name__ == '__main__':
     i = 0
 
     for position in point_array:
->>>>>>> 11228e0f569eb7fa7d4b38adc31770f25e992ddc
         # Move from current point to on top of the product
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
 

@@ -7,6 +7,7 @@ import os
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
+
 # Get the current script directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Append the parent directory of the script directory to the Python path
