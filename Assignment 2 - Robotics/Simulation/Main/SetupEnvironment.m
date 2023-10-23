@@ -35,4 +35,5 @@ PlaceObjectModified('fireExtinguisher.ply', baseTr * transl(2.2, -3.3, 0));
 PlaceObjectModified('emergencyStopWallMounted.ply', baseTr * transl(0.8, -3.05, 1.5));
 PlaceObjectModified('emergencyStopWallMounted.ply', baseTr * transl(2.2, -3.05, 1.5));
 PlaceObjectModified('warningLabel.ply',baseTr * transl(1.55, -3.05, 2.4)*trotx(pi/2))
+axis off
 end
