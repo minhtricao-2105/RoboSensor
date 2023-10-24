@@ -6,28 +6,80 @@ import copy, rospkg
 import spatialgeometry.geom as collisionObj
 
 # Python Message via ROS:
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+import sys, rospy, actionlib
+from geometry_msgs.msg import Twist
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchControllerRequest, SwitchController
+from controller_manager_msgs.srv import LoadControllerRequest, LoadController
+from controller_manager_msgs.srv import ListControllers, ListControllersRequest
+import geometry_msgs.msg as geometry_msgs
+from cartesian_control_msgs.msg import (
+    FollowCartesianTrajectoryAction,
+    FollowCartesianTrajectoryGoal,
+    CartesianTrajectoryPoint,
+)
+
+# Other Library:
 from spatialmath import SE3
 from sensor_msgs.msg import JointState
 from math import pi
 from scipy.spatial.transform import Rotation as R
 from spatialmath.base import *
 
+JOINT_NAMES = [
+    "shoulder_pan_joint",
+    "shoulder_lift_joint",
+    "elbow_joint",
+    "wrist_1_joint",
+    "wrist_2_joint",
+    "wrist_3_joint",
+]
+
+JOINT_TRAJECTORY_CONTROLLERS = [
+    "scaled_pos_joint_traj_controller",
+    "scaled_vel_joint_traj_controller",
+    "pos_joint_traj_controller",
+    "vel_joint_traj_controller",
+    "forward_joint_traj_controller",
+]
+
+CARTESIAN_TRAJECTORY_CONTROLLERS = [
+    "pose_based_cartesian_traj_controller",
+    "joint_based_cartesian_traj_controller",
+    "forward_cartesian_traj_controller",
+    "twist_controller",
+]
+
+CONFLICTING_CONTROLLERS = ["joint_group_vel_controller", "twist_controller"]
+
 class UR3e:
     
     def __init__(self):
-            
+
+        timeout = rospy.Duration(5)
+        self.switch_srv = rospy.ServiceProxy(
+            "controller_manager/switch_controller", SwitchController
+        )
+        self.load_srv = rospy.ServiceProxy("controller_manager/load_controller", LoadController)
+        self.list_srv = rospy.ServiceProxy("controller_manager/list_controllers", ListControllers)
+        try:
+            self.switch_srv.wait_for_service(timeout.to_sec())
+        except rospy.exceptions.ROSException as err:
+            rospy.logerr("Could not reach controller switch service. Msg: {}".format(err))
+            sys.exit(-1)
+
+        self.joint_trajectory_controller = JOINT_TRAJECTORY_CONTROLLERS[0]
+        self.cartesian_trajectory_controller = CARTESIAN_TRAJECTORY_CONTROLLERS[3]
+        self.pub = rospy.Publisher('/twist_controller/command', Twist, queue_size=10)
+        self.command_vel = Twist()
+        
         # Define a Subcriber:
         self.subscriber = rospy.Subscriber('/joint_states', JointState, self.getpos)
 
-        # Create an object of JointTrajectory()
-        self.joint_traj = JointTrajectory()
-
-        # Create a FollowJointTrajectoryGoal message:
-        self.goal = FollowJointTrajectoryGoal()
-        
         # Set up Action Client when creating an object
+        self.joint_traj = JointTrajectory()
+        self.goal = FollowJointTrajectoryGoal()
         self.set_up_action_client()
 
         # Set up the Client (change the topic if needed:)
@@ -64,6 +116,32 @@ class UR3e:
     def getpos(self,msg):
         self.currentQ = msg.position
     
+    def switch_controller(self, target_controller):
+        """Activates the desired controller and stops all others from the predefined list above"""
+        other_controllers = (
+            JOINT_TRAJECTORY_CONTROLLERS
+            + CARTESIAN_TRAJECTORY_CONTROLLERS
+            + CONFLICTING_CONTROLLERS
+        )
+
+        other_controllers.remove(target_controller)
+
+        srv = ListControllersRequest()
+        response = self.list_srv(srv)
+        for controller in response.controller:
+            if controller.name == target_controller and controller.state == "running":
+                return
+
+        srv = LoadControllerRequest()
+        srv.name = target_controller
+        self.load_srv(srv)
+
+        srv = SwitchControllerRequest()
+        srv.stop_controllers = other_controllers
+        srv.start_controllers = [target_controller]
+        srv.strictness = SwitchControllerRequest.BEST_EFFORT
+        self.switch_srv(srv)
+
     ## --- Update Postion to simulation robot:
     def update_robot_position(self, q):
         self.model.q = q
@@ -76,7 +154,7 @@ class UR3e:
 
     ##---- set_up_action_client function:
     def set_up_action_client(self):
-        
+
         # Set the joint names:
         self.joint_traj.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
@@ -95,10 +173,37 @@ class UR3e:
         # Set up the tolerance:
         self.goal.goal_time_tolerance = rospy.Duration.from_sec(0.05)
 
-    ##---- convert_trajectory_to_rosmsg function:
+    def switch_controller(self, target_controller):
+        """Activates the desired controller and stops all others from the predefined list above"""
+        other_controllers = (
+            JOINT_TRAJECTORY_CONTROLLERS
+            + CARTESIAN_TRAJECTORY_CONTROLLERS
+            + CONFLICTING_CONTROLLERS
+        )
 
+        other_controllers.remove(target_controller)
+
+        srv = ListControllersRequest()
+        response = self.list_srv(srv)
+        for controller in response.controller:
+            if controller.name == target_controller and controller.state == "running":
+                return
+
+        srv = LoadControllerRequest()
+        srv.name = target_controller
+        self.load_srv(srv)
+
+        srv = SwitchControllerRequest()
+        srv.stop_controllers = other_controllers
+        srv.start_controllers = [target_controller]
+        srv.strictness = SwitchControllerRequest.BEST_EFFORT
+        self.switch_srv(srv)
+
+    ##---- convert_trajectory_to_rosmsg function:
     def send_trajectory_to_client(self, path,  speed=1):
         
+        self.switch_controller(self.joint_trajectory_controller)
+
         # Clear the goal beforing adding new point:
         self.goal.trajectory.points.clear()
 
@@ -235,6 +340,21 @@ class UR3e:
 
         return q_matrix
     
+    def send_velocity(self, x, y, z, roll, pitch, yaw):
+        self.switch_controller(self.cartesian_trajectory_controller)
+        self.command_vel.linear.x = x
+        self.command_vel.linear.y = y
+        self.command_vel.linear.z = z
+        self.command_vel.angular.x = roll
+        self.command_vel.angular.y = pitch
+        self.command_vel.angular.z = yaw
+        rate = rospy.Rate(100)  # 100Hz
+        while not rospy.is_shutdown():
+            # Update the header timestamp to current time
+            self.pub.publish(self.command_vel)
+            rate.sleep()
+            break
+
     ##---- move_ee_up_down function:
     def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 5, real_robot = False):
         # Get the end-effector pose at this position:
@@ -359,7 +479,6 @@ class UR3e:
 
         return path
     
-
     def rotate_ee(self, env, degree = 90, speed = 1, real_robot = False):
 
         desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))

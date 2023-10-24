@@ -1,27 +1,53 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import rospy
-from control_msgs.msg import JointJog
-from std_msgs.msg import Header
+# -- Import necessary Python packages
+import rospy, rosbag, os, sys, threading
+from sensor_msgs.msg import Image
 
-rospy.init_node('test_node', anonymous=True)
 
-pub = rospy.Publisher('/servo_server/delta_joint_cmds', JointJog, queue_size=10)
+# Get the current script directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# Append the parent directory of the script directory to the Python path
+sys.path.append(os.path.join(script_dir, ".."))
 
-# Create a new JointJog message
-jog_cmd = JointJog()
-jog_cmd.header = Header(stamp=rospy.Time.now())
+# from Classes.GripperBaseClass import Gripper
+from OmcronBaseClass.UR3e import*
+from OmcronBaseClass.CameraBaseClass import*
+from OmcronBaseClass.Gripper import*
+from OmcronBaseClass.Mission import*
 
-# Set the joint names:
-jog_cmd.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+# Setup the ROS Node:
+rospy.init_node('robot_node')
 
-# Fill in the header:
-jog_cmd.header.frame_id = "base_link"
+# Setup the Robot:
+robot = UR3e()
 
-jog_cmd.velocities = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+# Setup the Swift Environment:
+env = swift.Swift()
+env.launch(realtime=True)
+env._send_socket
+env.add(robot.model)
+env.add(robot._cam)
+env.add(robot._gripper)
 
-rate = rospy.Rate(10)  # 10Hz
+# Setup the initial position of the robot:
+q_home = [-56.0, -93.8, -41.05, -135.07, 90.0, 34.0]
+q_home = [math.radians(angle) for angle in q_home]
 
-pub.publish(jog_cmd)
+# Using the UR3e robot, move the robot to the home position:
+try:
+    robot.update_robot_position(q_home)
+    robot.set_up_moveIt(0.1)
+    robot.arm.go(q_home, wait=True)
+    print("Robot is in the home position.")
+except:
+    print("No Moveit Driver is running or something went wrong...")
 
-rospy.spin()
+# robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
+
+# robot.send_velocity(0.01, 0, 0, 0, 0, 0)
+# rospy.sleep(5)
+# robot.send_velocity(0, 0, 0, 0, 0, 0)
+# rospy.sleep(5)
+# print('changing controlelr')
+# robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
