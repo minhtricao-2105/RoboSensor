@@ -53,6 +53,18 @@ print("Point 1: ", point_1[0])
 print("Point 2: ", point_1[1])
 
 robot.move_ee_up_down(env, delta_x=-point_1_ee [0], delta_y=point_1_ee [1], delta_z= -point_1_ee [2],real_robot=False)
+robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.08,real_robot=False)
+robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=False)
+# Move to the other side (rotate 180)
+desiredQ = robot.model.q.copy()
+# desiredQ = [124, -93.8, -41.05, -135.07, 90.0, 34.0]
+# desiredQ = [math.radians(angle) for angle in desiredQ]
+desiredQ[0] = desiredQ[0] + pi
+
+robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=False)
+
+robot.move_ee_up_down(env, delta_x=point_1_ee [0], delta_y=-point_1_ee [1], delta_z= -point_1_ee [2] + 0.1,real_robot=False)
+robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=False)
 env.hold()
 
 

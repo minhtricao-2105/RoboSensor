@@ -360,7 +360,7 @@ class UR3e:
         return path
     
 
-    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = True):
+    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = False):
 
         desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))
 

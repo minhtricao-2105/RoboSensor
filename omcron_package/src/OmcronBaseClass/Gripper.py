@@ -30,7 +30,7 @@ class Gripper:
     def CloseGripper(self, force=400):
         # Define a message:
         self.command.rGFR = force
-        self.command.rGWD = 0
+        self.command.rGWD = 600
         self.command.rCTR = 16
         self.pub.publish(self.command)
 

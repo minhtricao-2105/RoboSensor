@@ -62,6 +62,7 @@ if __name__ == '__main__':
 
     point_array = []
     angle_array = []
+    label_array = []
     
     for K in detected_objects:
         # Convert to 3D point
@@ -69,9 +70,11 @@ if __name__ == '__main__':
 
         point = camera.project_2D_to_3D(x, y, depth)
         point_array.append(point)
+        label_array.append(label)
         angle_array.append(angle)
 
     print(point_array)
+    print(label_array)
 
     # for position in point_array:
     #     robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] + 0.23,real_robot=True)
@@ -105,18 +108,32 @@ if __name__ == '__main__':
         # Move to home position 
         robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
 
+        # Move to the other side (rotate 180)
+        desiredQ = robot.model.q.copy()
+        desiredQ[0] = desiredQ[0] + pi
+
+        robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=True)
+
+        # Move to on top of drop off position (Predefine position for each color)
+        if (label_array[i] == 1):
+            robot.move_ee_up_down(env, delta_x=0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+        elif (label_array[i] == 2):
+            robot.move_ee_up_down(env, delta_x=0, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+        elif (label_array[i] == 3):
+            robot.move_ee_up_down(env, delta_x=-0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+
+        # Move to drop off position
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
+
+        # Open gripper
         gripper.OpenGripper()
         rospy.sleep(0.5)
 
-        
-        # Move to on top of drop off position
-
-        # Move to drop off position
-
         # Move back to on top of drop off position
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.08,real_robot=True)
 
         # Move to home position 
-        # robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
+        robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
 
 
 
