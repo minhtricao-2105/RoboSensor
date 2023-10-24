@@ -71,26 +71,11 @@ class UR3e:
 
         self.joint_trajectory_controller = JOINT_TRAJECTORY_CONTROLLERS[0]
         self.cartesian_trajectory_controller = CARTESIAN_TRAJECTORY_CONTROLLERS[3]
+        
         self.pub = rospy.Publisher('/twist_controller/command', Twist, queue_size=10)
         self.command_vel = Twist()
-        
-        # Define a Subcriber:
-        self.subscriber = rospy.Subscriber('/joint_states', JointState, self.getpos)
 
-        # Set up Action Client when creating an object
-        self.joint_traj = JointTrajectory()
-        self.goal = FollowJointTrajectoryGoal()
-        self.set_up_action_client()
-
-        # Set up the Client (change the topic if needed:)
-        self.client = actionlib.SimpleActionClient('scaled_pos_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-        # self.client = actionlib.SimpleActionClient('eff_joint_traj_controller/follow_joint_trajectory', FollowJointTrajectoryAction)
-        
-        # Create a Time Flag when creating an object:
-        self.start_time = time.perf_counter()
-
-        # Data Member of the class
-        self.currentQ = []
+        self.switch_controller(self.joint_trajectory_controller)
 
         # Set up the robot model:
         self.model = rtb.models.UR3()
@@ -111,10 +96,6 @@ class UR3e:
 
         self._cam_move(self._cam, self.model, self._TCR)
         self._cam_move(self._gripper, self.model, self._TGR)
-
-    ##---- CallBack Function:
-    def getpos(self,msg):
-        self.currentQ = msg.position
     
     def switch_controller(self, target_controller):
         """Activates the desired controller and stops all others from the predefined list above"""
@@ -152,27 +133,7 @@ class UR3e:
     def _cam_move(self, cam, robot, T):
         cam.T = robot.fkine(robot.q)*T
 
-    ##---- set_up_action_client function:
-    def set_up_action_client(self):
-
-        # Set the joint names:
-        self.joint_traj.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
-
-        # Fill in the header:
-        self.joint_traj.header.frame_id = "base_link"
-
-        # Set up the joint names:
-        self.goal.trajectory.joint_names = self.joint_traj.joint_names
-
-        # Set up Sequence:
-        self.goal.trajectory.header.seq = 1
-
-        # Set up Time Stamp
-        self.goal.trajectory.header.stamp = rospy.Time.now()
-
-        # Set up the tolerance:
-        self.goal.goal_time_tolerance = rospy.Duration.from_sec(0.05)
-
+    ## --- Switch Controller:
     def switch_controller(self, target_controller):
         """Activates the desired controller and stops all others from the predefined list above"""
         other_controllers = (
@@ -198,36 +159,46 @@ class UR3e:
         srv.start_controllers = [target_controller]
         srv.strictness = SwitchControllerRequest.BEST_EFFORT
         self.switch_srv(srv)
+    
+    ## --- Send Joint Trajectory:
+    def send_joint_trajectory(self, path, speed = 0.3):
+        """Creates a trajectory and sends it using the selected action server
+        Args:
+        - path: A list of joint configurations. Each configuration is a list of joint angles.
+        """
 
-    ##---- convert_trajectory_to_rosmsg function:
-    def send_trajectory_to_client(self, path,  speed=1):
-        
+        # make sure the correct controller is loaded and activated
         self.switch_controller(self.joint_trajectory_controller)
+        trajectory_client = actionlib.SimpleActionClient(
+            "{}/follow_joint_trajectory".format(self.joint_trajectory_controller),
+            FollowJointTrajectoryAction,
+        )
 
-        # Clear the goal beforing adding new point:
-        self.goal.trajectory.points.clear()
+        # Wait for action server to be ready
+        timeout = rospy.Duration(5)
+        if not trajectory_client.wait_for_server(timeout):
+            rospy.logerr("Could not reach controller action server.")
+            sys.exit(-1)
 
-        # Set up the clock:
-        end_time = time.perf_counter()
+        # Create and fill trajectory goal
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory.joint_names = JOINT_NAMES
 
-        # Calculate the excution time:
-        execution_time = end_time - self.start_time
-
+        # Assuming each point in the path should be reached in a constant time interval
+        time_interval = speed  # Adjust as necessary
         for i in range(len(path)):
             point = JointTrajectoryPoint()
-
             point.positions = path[i]
+            point.time_from_start = rospy.Duration((i + 1) * time_interval)
+            goal.trajectory.points.append(point)
 
-            point.time_from_start = rospy.Duration.from_sec((i+1)*(speed/len(path))) + rospy.Duration.from_sec(execution_time + 1)
+        rospy.loginfo("Executing trajectory using the {}".format(self.joint_trajectory_controller))
 
-            self.goal.trajectory.points.append(point)
-        
-        # Send the goal to the client:
-        self.client.send_goal(self.goal)
+        trajectory_client.send_goal(goal)
+        trajectory_client.wait_for_result()
 
-        self.client.wait_for_result()
-
-        result = self.client.get_result()
+        result = trajectory_client.get_result()
+        rospy.loginfo("Trajectory execution finished in state {}".format(result.error_code))
 
     ##---- combine_trajectories function:
 
@@ -265,14 +236,14 @@ class UR3e:
 
     ##---- move_jtraj function:
 
-    def move_jtraj(self, q0, q, env, steps = 50, speed = 5, real_robot = False):
+    def move_jtraj(self, q0, q, env, steps = 50, speed = 0.5, real_robot = False):
         
         # Generate a path:
         path = rtb.jtraj(q0, q, steps)
 
         # Send to messange to the robot
         if real_robot:
-            self.send_trajectory_to_client(path.q, speed)
+            self.send_joint_trajectory(path.q, speed)
             
             # update to robot.q
             self.model.q = path.q[-1, :]
@@ -348,15 +319,10 @@ class UR3e:
         self.command_vel.angular.x = roll
         self.command_vel.angular.y = pitch
         self.command_vel.angular.z = yaw
-        rate = rospy.Rate(100)  # 100Hz
-        while not rospy.is_shutdown():
-            # Update the header timestamp to current time
-            self.pub.publish(self.command_vel)
-            rate.sleep()
-            break
+        self.pub.publish(self.command_vel)
 
     ##---- move_ee_up_down function:
-    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 5, real_robot = False):
+    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 0.08, real_robot = False):
         # Get the end-effector pose at this position:
         ee_tr = self.model.fkine(self.model.q).A
 
@@ -371,7 +337,7 @@ class UR3e:
 
         # Simulation the movement:
         if real_robot:
-            self.send_trajectory_to_client(path, speed)
+            self.send_joint_trajectory(path, speed)
         else:
             self.move_simulation_robot(path, env = env)
 
@@ -415,7 +381,7 @@ class UR3e:
         else: 
             return True
 
-    def solve_elbow_up_ikine(self, desired_T, q_guess, env, speed = 1, real_robot = False):
+    def solve_elbow_up_ikine(self, desired_T, q_guess, env, speed = 0.5, real_robot = False):
 
         # Get the current joint angles:
         currentQ = q_guess
@@ -470,7 +436,7 @@ class UR3e:
 
         # Send to messange to the robot
         if real_robot:
-            self.send_trajectory_to_client(path.q, speed)
+            self.send_joint_trajectory(path.q, speed)
             
             # update to robot.q
             self.model.q = path.q[-1, :]
@@ -479,7 +445,7 @@ class UR3e:
 
         return path
     
-    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = False):
+    def rotate_ee(self, env, degree = 90, speed = 0.5, real_robot = False):
 
         desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))
 
@@ -489,7 +455,7 @@ class UR3e:
 
         # Send to messange to the robot
         if real_robot:
-            self.send_trajectory_to_client(path.q, speed)
+            self.send_joint_trajectory(path.q, speed)
             
             # update to robot.q
             self.model.q = path.q[-1, :]
