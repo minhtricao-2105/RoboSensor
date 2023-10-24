@@ -182,7 +182,7 @@ class Camera:
             'yellow': (np.array([20, 100, 100]), np.array([30, 255, 255]))
         }
 
-        all_detected_objects = {}
+        all_detected_objects = []
 
         for color, (lower_threshold, upper_threshold) in color_thresholds.items():
             mask = cv.inRange(hsv, lower_threshold, upper_threshold)
@@ -204,9 +204,10 @@ class Camera:
                     angle -= 90
                 coordinates = (cx, cy, depth, angle, color_labels[color])
                 detected_objects.append(coordinates)
+                all_detected_objects.append(coordinates)
                 cv.drawContours(self.cv_image, [box], 0, (0, 255, 0), 2)
 
-            all_detected_objects[color] = detected_objects
+            # all_detected_objects[color] = detected_objects
 
         return all_detected_objects
 

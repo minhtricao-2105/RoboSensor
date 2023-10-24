@@ -14,7 +14,7 @@ class Gripper:
         self.command = OnRobotRGOutput()
 
         # Setup the publisher
-        pub = rospy.Publisher('OnRobotRGOutput', OnRobotRGOutput, queue_size=1)
+        self.pub = rospy.Publisher('OnRobotRGOutput', OnRobotRGOutput, queue_size=1)
     
     ## - OpenGripper Function:
     def OpenGripper(self,force=400):

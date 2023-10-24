@@ -50,7 +50,7 @@ camera = Camera()
 gripper = Gripper()
 
 # Setup the Mission:
-misison = Mission()
+# misison = Mission()
 
 rospy.sleep(2)
 
@@ -72,43 +72,51 @@ if __name__ == '__main__':
         angle_array.append(angle)
 
     print(point_array)
+
+    # for position in point_array:
+    #     robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] + 0.23,real_robot=True)
+    #     robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.05,real_robot=True)
+    #     break
     
     i = 0
 
     for position in point_array:
         # Move from current point to on top of the product
-        robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
+        robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] + 0.23,real_robot=True)
 
         # Get current Q and change the orientation of the ee
-        currentQ = robot.currentQ
-        currentQ[5] = angle_array[i]
-        robot.set_up_moveIt(0.1)
-        robot.arm.go(currentQ, wait=True)
-        i = i + 1
+        robot.rotate_ee(env, degree = angle_array[i], speed = 5, real_robot = True)
+        i=i+1
 
         # Open gripper
         gripper.OpenGripper()
+        rospy.sleep(0.5)
 
         # Move to position to pick up the product
-        robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2],real_robot=True)
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
 
         # Close gripper
         gripper.CloseGripper()
+        rospy.sleep(0.5)
 
         # Move back to on top of the product
-        robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] - 0.18,real_robot=True)
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.08,real_robot=True)
 
         # Move to home position 
         robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
 
-        # Move to on top of drop off position 
+        gripper.OpenGripper()
+        rospy.sleep(0.5)
+
+        
+        # Move to on top of drop off position
 
         # Move to drop off position
 
         # Move back to on top of drop off position
 
         # Move to home position 
-        robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
+        # robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
 
 
 

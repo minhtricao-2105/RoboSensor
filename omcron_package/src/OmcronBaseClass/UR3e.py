@@ -160,7 +160,7 @@ class UR3e:
 
     ##---- move_jtraj function:
 
-    def move_jtraj(self, q0, q, env, steps = 50, speed = 1, real_robot = False):
+    def move_jtraj(self, q0, q, env, steps = 50, speed = 5, real_robot = False):
         
         # Generate a path:
         path = rtb.jtraj(q0, q, steps)
@@ -236,7 +236,7 @@ class UR3e:
         return q_matrix
     
     ##---- move_ee_up_down function:
-    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 1, real_robot = False):
+    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 5, real_robot = False):
         # Get the end-effector pose at this position:
         ee_tr = self.model.fkine(self.model.q).A
 
@@ -360,7 +360,7 @@ class UR3e:
         return path
     
 
-    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = False):
+    def rotate_ee(self, env, degree = 90, speed = 1, real_robot = True):
 
         desired_q = copy.deepcopy(self.model.q + np.array([0, 0, 0, 0, 0, np.deg2rad(degree)]))
 
