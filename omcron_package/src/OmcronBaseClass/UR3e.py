@@ -88,6 +88,9 @@ class UR3e:
             FollowJointTrajectoryAction,
         )
 
+        # Create a Time Flag when creating an object:
+        self.start_time = time.perf_counter()
+
         # Switch to joint trajectory controller for Moveit:
         self.switch_controller(self.joint_trajectory_controller)
 
@@ -168,6 +171,12 @@ class UR3e:
         if not self.trajectory_client.wait_for_server(timeout):
             rospy.logerr("Could not reach controller action server.")
             sys.exit(-1)
+        
+        # Set up the clock:
+        end_time = time.perf_counter()
+
+        # Calculate the excution time:
+        time_from_start = end_time - self.start_time
 
         # Create and fill trajectory goal
         goal = FollowJointTrajectoryGoal()
@@ -178,7 +187,7 @@ class UR3e:
         for i in range(len(path)):
             point = JointTrajectoryPoint()
             point.positions = path[i]
-            point.time_from_start = rospy.Duration((i + 1) * time_interval)
+            point.time_from_start = rospy.Duration.from_sec((i + 1) * time_interval/len(path) + rospy.Duration.from_sec(time_from_start+1))
             goal.trajectory.points.append(point)
 
         rospy.loginfo("Executing trajectory using the {}".format(self.joint_trajectory_controller))
