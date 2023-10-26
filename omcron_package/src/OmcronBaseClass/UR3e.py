@@ -72,6 +72,7 @@ class UR3e:
 
         # Controller:
         self.joint_trajectory_controller = JOINT_TRAJECTORY_CONTROLLERS[0]
+        self.vel_trajectory_controller = "vel_joint_traj_controller"
         self.cartesian_trajectory_controller = CARTESIAN_TRAJECTORY_CONTROLLERS[3]
         
         # Publisher:
@@ -81,12 +82,6 @@ class UR3e:
         # Subcriber:
         self.sub = rospy.Subscriber('/joint_states', JointState, self.joint_states_callback)
         self.joint_states = JointState()
-
-        # Action Client:
-        self.trajectory_client = actionlib.SimpleActionClient(
-            "{}/follow_joint_trajectory".format(self.joint_trajectory_controller),
-            FollowJointTrajectoryAction,
-        )
 
         # Create a Time Flag when creating an object:
         self.start_time = time.perf_counter()
@@ -164,20 +159,20 @@ class UR3e:
 
         # make sure the correct controller is loaded and activated
         self.switch_controller(self.joint_trajectory_controller)
+        print('Switch Controller to Scaled Joint Trajectory Controller')
 
+        # Action Client:
+        trajectory_client = actionlib.SimpleActionClient(
+            "{}/follow_joint_trajectory".format(self.joint_trajectory_controller),
+            FollowJointTrajectoryAction,
+        )
 
         # Wait for action server to be ready
         timeout = rospy.Duration(5)
-        if not self.trajectory_client.wait_for_server(timeout):
+        if not trajectory_client.wait_for_server(timeout):
             rospy.logerr("Could not reach controller action server.")
             sys.exit(-1)
         
-        # Set up the clock:
-        end_time = time.perf_counter()
-
-        # Calculate the excution time:
-        time_from_start = end_time - self.start_time
-
         # Create and fill trajectory goal
         goal = FollowJointTrajectoryGoal()
         goal.trajectory.joint_names = JOINT_NAMES
@@ -187,15 +182,48 @@ class UR3e:
         for i in range(len(path)):
             point = JointTrajectoryPoint()
             point.positions = path[i]
-            point.time_from_start = rospy.Duration.from_sec((i + 1) * time_interval/len(path) + rospy.Duration.from_sec(time_from_start+1))
+            point.time_from_start = rospy.Duration.from_sec((i + 1) * time_interval)
             goal.trajectory.points.append(point)
 
         rospy.loginfo("Executing trajectory using the {}".format(self.joint_trajectory_controller))
 
-        self.trajectory_client.send_goal(goal)
-        self.trajectory_client.wait_for_result()
+        trajectory_client.send_goal(goal)
+        trajectory_client.wait_for_result()
 
-        result = self.trajectory_client.get_result()
+        result = trajectory_client.get_result()
+        rospy.loginfo("Trajectory execution finished in state {}".format(result.error_code))
+
+    ## --- Send Velocity to the Robot:
+    def send_velocity_trajectory(self, qd, duration):
+        
+        # Switch thhe controller:
+        self.switch_controller(self.vel_trajectory_controller)
+        print('Switch Controller to Scaled Velocity Trajectory Controller')
+        velocity_client = actionlib.SimpleActionClient(
+            "{}/follow_joint_trajectory".format(self.vel_trajectory_controller),
+            FollowJointTrajectoryAction,
+        )
+
+        # Wait for action server to be ready
+        timeout = rospy.Duration(5)
+        if not velocity_client.wait_for_server(timeout):
+            rospy.logerr("Could not reach controller action server.")
+            sys.exit(-1)
+
+        # Create and fill trajectory goal
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory.joint_names = JOINT_NAMES
+        
+        # Create a velocity point
+        point = JointTrajectoryPoint()
+        point.velocities = qd
+        point.time_from_start = rospy.Duration(duration)  
+
+        # Send the velocity point to the robot:
+        goal.trajectory.points.append(point)
+        velocity_client.send_goal(goal)
+        velocity_client.wait_for_result()
+        result = velocity_client.get_result()
         rospy.loginfo("Trajectory execution finished in state {}".format(result.error_code))
 
     ##---- combine_trajectories function:
@@ -351,6 +379,7 @@ class UR3e:
             - yaw: The angular velocity in yaw axis
         """
         self.switch_controller(self.cartesian_trajectory_controller)
+        print('Switch Controller to Twist Controller')
         self.command_vel.linear.x = x
         self.command_vel.linear.y = y
         self.command_vel.linear.z = z
@@ -373,7 +402,7 @@ class UR3e:
         self.pub.publish(self.command_vel)
 
     ## --- move_ee_up_down function:
-    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 0.05, real_robot = False):
+    def move_ee_up_down(self, env, delta_x = 0, delta_y = 0, delta_z = 0, speed = 0.02, real_robot = False):
         """
         Move the end-effector in the cartestian plane
         

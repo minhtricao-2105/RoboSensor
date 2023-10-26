@@ -21,9 +21,4 @@ class Position:
 if __name__ == "__main__":
     rospy.init_node('position_node')
     position = Position()
-    env = swift.Swift()
-    env.launch(realtime=True)
-    env._send_socket
-    env.add(position.model)
-    env.step(0.05)
     rospy.spin()

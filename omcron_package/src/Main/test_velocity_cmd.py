@@ -52,3 +52,5 @@ except:
 # robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
 
 robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
+# robot.send_velocity_trajectory([0,0,0,0,0,0.3], 10)
+
