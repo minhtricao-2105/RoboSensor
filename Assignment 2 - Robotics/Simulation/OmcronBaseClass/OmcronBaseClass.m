@@ -779,7 +779,7 @@ classdef OmcronBaseClass < handle
                 checkSonar = self.SonarCheck(ultrasonic);
 
                 % -- 7. Checking E-Stop in the GUI:
-                if (strcmp(self.robotState, 'stop') || strcmp(self.robotState, 'holding'))
+                if (strcmp(self.robotState, 'stop'))
                     i = i;
                     disp("EMERGENCY STOP!");
 
@@ -794,7 +794,8 @@ classdef OmcronBaseClass < handle
                     elseif  checkButton == true
                         app.ToggleLampLight(3);
                     end
-
+                elseif (strcmp(self.robotState, 'holding'))
+                    app.IdleRobotMission();
                 else
                     i = i + 1;
                 end
