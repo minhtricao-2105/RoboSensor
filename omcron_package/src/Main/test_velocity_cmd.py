@@ -43,6 +43,11 @@ try:
 except:
     print("No Moveit Driver is running or something went wrong...")
 
+# Move to the other side (rotate 180)
+desiredQ = robot.model.q.copy()
+desiredQ[0] = desiredQ[0] + pi
+
+robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=True)
 # robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
 
 
@@ -51,6 +56,9 @@ except:
 # print('changing controlelr')
 # robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
 
-robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
+robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.15,real_robot=True)
+robot.move_ee_up_down(env, delta_x=0, delta_y=-0.16, delta_z= 0,real_robot=True)
+robot.move_ee_up_down(env, delta_x=-0.1, delta_y=0, delta_z= 0,real_robot=True)
+robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.29,real_robot=True)
 # robot.send_velocity_trajectory([0,0,0,0,0,0.3], 10)
 

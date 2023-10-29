@@ -266,7 +266,7 @@ class UR3e:
         current_joint_values = self.arm.get_current_joint_values()
 
     ##---- move_jtraj function:
-    def move_jtraj(self, q0, q, env, steps = 50, speed = 0.3, real_robot = False):
+    def move_jtraj(self, q0, q, env, steps = 50, speed = 0.15, real_robot = False):
         """
         Move the robot from q0 to q using jtraj
 

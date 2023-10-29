@@ -48,6 +48,7 @@ class Sensor:
         self.translation = None
         self.rotation = None
 
+        # Initializing depth, center x and y axis value
         self.depth = None
         self.center_x = None
         self.center_y = None
@@ -56,6 +57,7 @@ class Sensor:
         self.last_rotations = []     # List to store rotation vectors
         self.max_readings = 50       # Maximum number of readings to keep
 
+        # Initillzing laser scan data
         self.laser_data = None
 
     # Laser call back function
@@ -77,22 +79,25 @@ class Sensor:
         # Convert the ROS message to an OpenCV image:
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
+        # Convert to gray image
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
         # Detect ArUco markers:
         markerCorners, markerIds, _= cv2.aruco.detectMarkers(gray, self.dictionary, parameters=self.parameters)
 
+        # If camera can detect ArUco marker
         if markerIds is not None:
             ########################
             #This function is used to get the rotation matrix and translation matrix 
             #for reference: https://docs.opencv.org/4.8.0/d9/d6a/group__aruco.html#ga3bc50d61fe4db7bce8d26d56b5a6428a
-            marker_size = 0.23          #replace with real marker size
+            marker_size = 0.23          #real marker size
 
-            fx = 1.085595       #focal length in x axis
-            fy = 1.085595       #focal length in y axis
-            cx = 320            #principal point x
-            cy = 240            #principal point y
+            fx = 1.085595               #focal length in x axis
+            fy = 1.085595               #focal length in y axis
+            cx = 320                    #principal point x
+            cy = 240                    #principal point y
 
+            # Define camera matrix
             camera_matrix = np.array([[fx, 0, cx],
                                     [0, fy, cy],
                                     [0, 0, 1]], dtype=np.float64)
@@ -106,6 +111,7 @@ class Sensor:
             
             dist_coeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float64)
 
+            # Compute translation and rotation matrix of current position 
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(markerCorners, marker_size, camera_matrix, dist_coeffs)
             
             self.translation = tvecs
@@ -140,6 +146,7 @@ class Sensor:
             # define Kp
             kp = 0.001
             angular_velocity = -kp*error_x
+
             # Get the depth value from the depth image:
             # self.depth = self.depth_image[self.center_y][self.center_x]
             self.depth = math.sqrt(self.translation[0][0][0]*self.translation[0][0][0] + self.translation[0][0][1]*self.translation[0][0][1])
@@ -159,16 +166,19 @@ class Sensor:
             # get laser range data
             laser_range = self.laser_data.ranges
             
+            # Check surrounding space to detect obstacle
             count = 0
             for i in range(len(laser_range)):
                 if laser_range[i] < 0.18 and laser_range[i] > self.laser_data.range_min:
                     count = count + 1
 
+            # If obstacle is detected, stop the robot
             if count >= 18:
                 rospy.INFO("COLLISION")
                 linear_velocity = 0.0
                 angular_velocity = 0.0
             
+            # Send command velocity to robot
             self.move_cmd.linear.x = linear_velocity
             self.move_cmd.angular.z = angular_velocity
             self.cmd_vel_pub.publish(self.move_cmd)
@@ -178,6 +188,8 @@ class Sensor:
 
             # Draw a circle at the center of the marker:
             cv2.circle(cv_image, (self.center_x, self.center_y), 5, (0, 0, 255), -1)
+        
+        # When the follower robot lose sight of ArUco marker, predict the next moves of guider robot and go back on track
         else:
             
             # Stop the robot:
@@ -185,12 +197,14 @@ class Sensor:
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
 
+            # Using last detected position to calculate expected time to get there
             if self.translation is not None:
                 durationLinear = self.depth/0.26
                 print(durationLinear)
             else:
                 durationLinear = 0
 
+            # Using last detected position to calculate expected time to get there
             durationRotate = math.asin(abs(self.center_x)/self.depth)/1.82
 
             #Go to the position first
@@ -206,11 +220,12 @@ class Sensor:
                 self.move_cmd.angular.z = angular_velocity
                 self.cmd_vel_pub.publish(self.move_cmd)
 
-                #If condition 
+                # Stop after reach expected pose
                 if (elapseTime >= durationLinear+0.98):
                     print('break')
                     break
-
+            
+            # Stop the robot
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
@@ -232,20 +247,16 @@ class Sensor:
                 self.cmd_vel_pub.publish(self.move_cmd)
 
 
-                #If condition 
+                # Stop after reach expected pose
                 if (elapseTime >= durationRotate+0.5):
                     break
-
-  
-
+            
+            # Stop the robot
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
 
-
-
-
-            #############################This is to calculate the trend, check it out#####################################################
+            #############################This is to calculate the trend to predict next location of the guider#####################################################
 
             # Calculate the trend in translation and rotation using linear regression
             trend_translation = self.calculate_trend(self.last_translations)
@@ -285,11 +296,12 @@ class Sensor:
                 self.move_cmd.angular.z = angular_velocity
                 self.cmd_vel_pub.publish(self.move_cmd)
 
-                #If condition 
+                # Stop after reach expected pose
                 if (elapseTime >= durationLinear+0.98):
                     print('break')
                     break
-
+            
+            # Stop the robot
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
@@ -311,23 +323,21 @@ class Sensor:
                 self.cmd_vel_pub.publish(self.move_cmd)
 
 
-                #If condition 
+                # Stop after reach expected pose
                 if (elapseTime >= durationRotate+0.5):
                     break
-
-  
-
+            
+            # Stop the robot
             self.move_cmd.linear.x = 0.0
             self.move_cmd.angular.z = 0.0
             self.cmd_vel_pub.publish(self.move_cmd)
             #########################################################################################
 
-
-
         # Now you can visualize the image with detected markers using OpenCV
         cv2.imshow('Detected ArUco markers', cv_image)
         cv2.waitKey(1)  # Display the image for a short duration (1 ms). This keeps the display updated.
     
+    # Function is used to calculate the motion trend of the guider based on last 50 reading data
     def calculate_trend(self, data):
         # Calculate the trend (linear regression) for a given data set
         n = len(data)
@@ -340,6 +350,7 @@ class Sensor:
         trend = model.coef_[0]
         return trend
 
+    # Function is used to predict the next position of the guider robot based on the calculated trend
     def predict_current_value(self, trend, last_data):
         # Predict the current value based on the trend
         n = len(last_data)

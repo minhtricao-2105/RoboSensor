@@ -88,19 +88,19 @@ if __name__ == '__main__':
         robot.move_ee_up_down(env, delta_x=-position [0], delta_y=position [1], delta_z= -position [2] + 0.23,real_robot=True)
 
         # Get current Q and change the orientation of the ee
-        robot.rotate_ee(env, degree = angle_array[i], speed = 5, real_robot = True)
+        robot.rotate_ee(env, degree = angle_array[i], speed = 0.03, real_robot = True)
         i=i+1
 
         # Open gripper
         gripper.OpenGripper()
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
 
         # Move to position to pick up the product
         robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
 
         # Close gripper
         gripper.CloseGripper()
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
 
         # Move back to on top of the product
         robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.08,real_robot=True)
@@ -115,11 +115,11 @@ if __name__ == '__main__':
         robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=True)
 
         # Move to on top of drop off position (Predefine position for each color)
-        if (label_array[i] == 1):
+        if (label_array[i-1] == 1):
             robot.move_ee_up_down(env, delta_x=0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
-        elif (label_array[i] == 2):
+        elif (label_array[i-1] == 2):
             robot.move_ee_up_down(env, delta_x=0, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
-        elif (label_array[i] == 3):
+        elif (label_array[i-1] == 3):
             robot.move_ee_up_down(env, delta_x=-0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
 
         # Move to drop off position
