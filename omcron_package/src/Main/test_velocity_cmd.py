@@ -48,17 +48,13 @@ desiredQ = robot.model.q.copy()
 desiredQ[0] = desiredQ[0] + pi
 
 robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=True)
-# robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
+q_home_drop = [102.93, -131.0, -42.63, -98.49, 89.91, 11.40]
+q_home_drop = [math.radians(angle) for angle in q_home_drop]
+robot.move_jtraj(robot.model.q, q_home_drop, env, 50, real_robot=True)
 
-
-# robot.send_velocity(0, 0, 0, 0, 0, 0)
-# rospy.sleep(5)
-# print('changing controlelr')
-# robot.rotate_ee(env, degree = 30, speed = 5, real_robot = True)
-
-robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.15,real_robot=True)
-robot.move_ee_up_down(env, delta_x=0, delta_y=-0.16, delta_z= 0,real_robot=True)
-robot.move_ee_up_down(env, delta_x=-0.1, delta_y=0, delta_z= 0,real_robot=True)
-robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.29,real_robot=True)
+robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.18,real_robot=True)
+# robot.move_ee_up_down(env, delta_x=0, delta_y=-0.16, delta_z= 0,real_robot=True)
+# robot.move_ee_up_down(env, delta_x=-0.1, delta_y=0, delta_z= 0,real_robot=True)
+# robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.29,real_robot=True)
 # robot.send_velocity_trajectory([0,0,0,0,0,0.3], 10)
 

@@ -114,23 +114,28 @@ if __name__ == '__main__':
 
         robot.move_jtraj(robot.model.q, desiredQ, env, 50, real_robot=True)
 
-        # Move to on top of drop off position (Predefine position for each color)
-        if (label_array[i-1] == 1):
-            robot.move_ee_up_down(env, delta_x=0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
-        elif (label_array[i-1] == 2):
-            robot.move_ee_up_down(env, delta_x=0, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
-        elif (label_array[i-1] == 3):
-            robot.move_ee_up_down(env, delta_x=-0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+        # # Move to on top of drop off position (Predefine position for each color)
+        # if (label_array[i-1] == 1):
+        #     robot.move_ee_up_down(env, delta_x=0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+        # elif (label_array[i-1] == 2):
+        #     robot.move_ee_up_down(env, delta_x=0, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+        # elif (label_array[i-1] == 3):
+        #     robot.move_ee_up_down(env, delta_x=-0.08, delta_y=-0.03, delta_z= -position [2] + 0.23,real_robot=True)
+
+        # Move to homing dropping position:
+        q_home_drop = [102.93, -131.0, -42.63, -98.49, 89.91, 11.40]
+        q_home_drop = [math.radians(angle) for angle in q_home_drop]
+        robot.move_jtraj(robot.model.q, q_home_drop, env, 50, real_robot=True)
 
         # Move to drop off position
-        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.08,real_robot=True)
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= -0.18,real_robot=True)
 
         # Open gripper
         gripper.OpenGripper()
         rospy.sleep(0.5)
 
         # Move back to on top of drop off position
-        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.08,real_robot=True)
+        robot.move_ee_up_down(env, delta_x=0, delta_y=0, delta_z= 0.18,real_robot=True)
 
         # Move to home position 
         robot.move_jtraj(robot.model.q, q_home, env, 50, real_robot=True)
