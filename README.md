@@ -10,5 +10,5 @@
 
 ## Contributors:
 The contributor in these projects are:
-  1. Minh Tri Cao    - Student ID Number: 14231702
+  1. Minh Tri Cao    - Student ID Number: 14231702 - Email: caominhtri21052001@gmail.com
   2. Anh Tung Nguyen - Student ID Number: 14072286
